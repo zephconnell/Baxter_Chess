@@ -1,0 +1,29 @@
+#!/usr/bin/env python
+
+import rospy
+import baxter_interface
+
+class EndPoint(object):
+    def __init__(self, limb = "left"):
+        self.limb_name = limb
+        self.limb = baxter_interface.Limb(limb)
+   
+def main():
+    rospy.init_node("endpoint", anonymous = True)
+    end = EndPoint()
+    end_pose = end.limb.endpoint_pose()
+    end_velocity = end.limb.endpoint_velocity()
+    end_effort = end.limb.endpoint_effort()
+    
+    print('\n'*1)    
+    print("The end effector pose is {0}.".format(end_pose))
+    print('\n'*1)
+    print("The end effector velocity is {0}.".format(end_velocity))
+    print('\n'*1)
+    print("The end effector effort is {0}.".format(end_effort))
+    print('\n'*1)    
+
+if __name__ == '__main__':
+    main()
+    
+    
