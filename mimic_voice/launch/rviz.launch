@@ -1,0 +1,6 @@
+<launch>
+
+  <node pkg="rviz" type="rviz" name="rviz" args=" -d $(find mimic_voice)/skeleton.rviz"/>
+
+
+</launch>
