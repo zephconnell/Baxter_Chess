@@ -532,9 +532,11 @@ class Locate():
 
         while len(to_do) > 0:
             x, y = to_do.pop()                             # get next pixel to test
-            if cv.Get2D(image, y, x)[0] == self.black[0]:  # if black pixel found
+            #if cv.Get2D(image, y, x)[0] == self.black[0]:  # if black pixel found
+            if cv.Get2D(cv.fromarray(image), y, x)[0] == self.black[0]:  # if black pixel found
                 pixel_list.append([x, y])                  # save pixel position
-                cv.Set2D(image, y, x, almost_black)        # set pixel to almost black
+                #cv.Set2D(image, y, x, almost_black)        # set pixel to almost black
+                cv.Set2D(cv.fromarray(image), y, x, almost_black)        # set pixel to almost black
                 to_do.append([x, y - 1])                   # add neighbours to to do list
                 to_do.append([x, y + 1])
                 to_do.append([x - 1, y])
@@ -573,10 +575,13 @@ class Locate():
                             max_area = n                            # save area of object
 
         if max_area > 0:                                            # in tray found
-            cv.Circle(canny, (centre), 9, (250, 250, 250), -1)      # mark tray centre
+            #cv.Circle(canny, (centre), 9, (250, 250, 250), -1)      # mark tray centre
+            cv.Circle(cv.fromarray(canny), (centre), 9, (250, 250, 250), -1)      # mark tray centre
 
         # display the modified canny
-        cv.ShowImage("Modified Canny", canny)
+        #cv.ShowImage("Modified Canny", canny)
+        print "suppose to show a canny here"
+        cv2.imshow("Modified canny", canny)
 
         # 3ms wait
         cv.WaitKey(3)
