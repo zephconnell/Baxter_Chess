@@ -216,7 +216,7 @@ class Locate():
         self.limb           = arm
         self._rp = rospkg.RosPack()
         #my package is called test.  You need to change this to the name of your package.
-        self._images = (self._rp.get_path('test') + '/share/images')
+        self._images = (self._rp.get_path('baby_steps') + '/share/images')
         self.limb_interface = baxter_interface.Limb(self.limb) 
         self._joint_names = self.limb_interface.joint_names()       
         print("Getting robot state.... ")
@@ -305,7 +305,9 @@ class Locate():
         # parameters: size(image width and height).  Here we are using Baxter's hand camera resolutions.  
         # next is the bit depth of image elements. Most OpenCV functions use mono8 or bgr8.  Here we use 8.
         # Number of channels per pixel.  Most OpenCV functions support 1-4 channels.  We are using 1 channel. 
-        self.canny = cv.CreateImage((self.width, self.height), 8, 1)
+        #self.canny = cv.CreateImage((self.width, self.height), 8, 1)
+        size1 = (self.width, self.height, 1)
+        self.canny = numpy.zeros(size1, numpy.int8)
         """
         Canny uses two thresholds--an upper and lower.  If a pixel gradient is higher than the upper threshold,
         the pixel is accepted as an edge.  If a pixel gradient value is below the lower threshold, then it is rejected. 
@@ -320,8 +322,11 @@ class Locate():
         # minimum ball tray area
         self.min_area = 20000
 
-        # callback image
-        self.cv_image = cv.CreateImage((self.width, self.height), 8, 3)
+        # callback image -- creating blank image
+        #self.cv_image = cv.CreateImage((self.width, self.height), 8, 3)
+	size = (self.width, self.height, 3)
+	self.cv_image = numpy.zeros(size, numpy.int8)
+	
 
         # colours
         self.white = (255, 255, 255)
@@ -518,7 +523,8 @@ class Locate():
         almost_black = (1, 1, 1)
 
         pixel_list = [(x_in, y_in)]                   # first pixel is black save position
-        cv.Set2D(image, y_in, x_in, almost_black)     # set pixel to almost black
+        #cv.Set2D(image, y_in, x_in, almost_black)     # set pixel to almost black
+        cv.Set2D(cv.fromarray(image), y_in, x_in, almost_black)     # set pixel to almost black
         to_do = [(x_in, y_in - 1)]                    # add neighbours to to do list
         to_do.append([x_in, y_in + 1])
         to_do.append([x_in - 1, y_in])
@@ -538,7 +544,8 @@ class Locate():
 
     # Remove artifacts and find largest object
     def look_for_ball_tray(self, canny):
-        width, height = cv.GetSize(canny)
+        #width, height = cv.GetSize(canny)
+        width, height = canny.shape
 
         centre   = (0, 0)
         max_area = 0
@@ -546,11 +553,13 @@ class Locate():
         # for all but edge pixels
         for x in range(1, width - 2):
             for y in range(1, height - 2):
-                if cv.Get2D(canny, y, x)[0] == self.black[0]:       # black pixel found
+                #if cv.Get2D(canny, y, x)[0] == self.black[0]:       # black pixel found
+                if cv.Get2D(cv.fromarray(canny), y, x)[0] == self.black[0]:       # black pixel found
                     pixel_list = self.tree_walk(canny, x, y)        # tree walk pixel
                     if len(pixel_list) < self.min_area:             # if object too small
                         for l in pixel_list:
-                            cv.Set2D(canny, l[1], l[0], self.white) # set pixel to white
+                            #cv.Set2D(canny, l[1], l[0], self.white) # set pixel to white
+                            cv.Set2D(cv.fromarray(canny), l[1], l[0], self.white) # set pixel to white
                     else:                                           # if object found
                         n = len(pixel_list)
                         if n > max_area:                            # if largest object found
@@ -575,7 +584,9 @@ class Locate():
 
     # flood fill edge of image to leave objects
     def flood_fill_edge(self, canny):
-        width, height = cv.GetSize(canny)
+        #width, height = cv.GetSize(canny)
+        width, height = canny.shape
+        canny = cv.fromarray(canny)
 
         #(name of array, row, column, value)
         # set boarder pixels to white
@@ -1011,14 +1022,13 @@ class Locate():
         if self.save_images:
             # save raw image of ball tray
             file_name = self.image_dir + "ball_tray_" + str(iteration) + ".jpg"
-            cv.SaveImage(file_name, cv.fromarray(self.cv_image))
-
+            #cv.SaveImage(file_name, cv.fromarray(self.cv_image))
+            cv2.imwrite(file_name, self.cv_image)
         # create an empty image variable, the same dimensions as our camera feed.
-        gray = cv.CreateImage((cv.GetSize(cv.fromarray(self.cv_image))), 8, 1)
-
+        #gray = cv.CreateImage((cv.GetSize(cv.fromarray(self.cv_image))), 8, 1)
         # convert the image to a grayscale image
-        cv.CvtColor(cv.fromarray(self.cv_image), gray, cv.CV_BGR2GRAY)
-
+        #cv.CvtColor(cv.fromarray(self.cv_image), gray, cv.CV_BGR2GRAY)
+	gray = cv2.cvtColor(self.cv_image, cv2.COLOR_BGR2GRAY)
         # display image on head monitor
         font     = cv.InitFont(cv.CV_FONT_HERSHEY_SIMPLEX, 1.0, 1.0, 1)
         position = (30, 60)
@@ -1032,15 +1042,18 @@ class Locate():
         # he shows how to create a tracker bar to adjust the greyscale thresholds
         # http://mathalope.co.uk/2015/06/03/canny-edge-detection-app-with-opencv-python/
         # create a canny edge detection map of the greyscale image
-        cv.Canny(gray, self.canny, self.canny_low, self.canny_high, 3)
+        #cv.Canny(gray, self.canny, self.canny_low, self.canny_high, 3)
+        self.canny = cv2.Canny(gray, self.canny_low, self.canny_high)
 
         # display the canny transformation
-        cv.ShowImage("Canny Edge Detection", self.canny)
+        #cv.ShowImage("Canny Edge Detection", self.canny)
+        cv2.imshow("Canny Edge Detection", self.canny)
 
         if self.save_images:
             # save Canny image of ball tray
             file_name = self.image_dir + "canny_tray_" + str(iteration) + ".jpg"
-            cv.SaveImage(file_name, self.canny)
+            #cv.SaveImage(file_name, self.canny)
+	    cv2.imwrite(file_name, self.cv_image)
 
         # flood fill edge of image to leave only objects
         self.flood_fill_edge(self.canny)
@@ -1727,4 +1740,3 @@ Also tutorials on the use of tf2 on the ros wiki
 
 tf_conversions.transformations.quaternion_from_euler(roll, pitch, yaw)
 """
-
