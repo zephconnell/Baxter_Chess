@@ -1,42 +1,4 @@
 #!/usr/bin/env python
-#below is a standard open source license used
-# BSD (Berkley Software Distribution) or MIT format are most commonly used. 
-# Here is a link to Wikepedia that describes the different license types:
-# https://en.wikipedia.org/wiki/BSD_licenses
-#####################################################################################
-#                                                                                   #
-# Copyright (c) 2014, Active Robots Ltd.                                            #
-# All rights reserved.                                                              #
-#                                                                                   #
-# Redistribution and use in source and binary forms, with or without                #
-# modification, are permitted provided that the following conditions are met:       #
-#                                                                                   #
-# 1. Redistributions of source code must retain the above copyright notice,         #
-#    this list of conditions and the following disclaimer.                          #
-# 2. Redistributions in binary form must reproduce the above copyright              #
-#    notice, this list of conditions and the following disclaimer in the            #
-#    documentation and/or other materials provided with the distribution.           #
-# 3. Neither the name of the Active Robots nor the names of its contributors        #
-#    may be used to endorse or promote products derived from this software          #
-#    without specific prior written permission.                                     #
-#                                                                                   #
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"       #
-# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE         #
-# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE        #
-# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE          #
-# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR               #
-# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF              #
-# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS          #
-# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN           #
-# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)           #
-# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE        #
-# POSSIBILITY OF SUCH DAMAGE.                                                       #
-#                                                                                   #
-#####################################################################################
-#Below I divided up the imports into broad categories to help you understand
-# why particular modules/packages were being imported for this program. 
-# The 4 categories are: 1) ROS 2) PYTHON  3)RETHINK  and 4) YOUR OWN CLASSES that
-# you create. 
 
 """
 ROS IMPORTS
@@ -140,11 +102,7 @@ import sys
 #imports a module which has several string classes and useful functions
 import string
 
-#CHECK IF TIME IS NEEDED ---may it is used in the Hough Circles but it
-# is not required for the canny and ik moves
-#import time
-#imports module that will allow generation of random number
-# this is used in the function called dither()
+
 import random
 
 # in python mutable objects are lists and dictionaries. 
@@ -158,18 +116,9 @@ import copy
 """ 
 RETHINK IMPORTS
 """
-# anytime you are working with Baxter, you need to import his interface
-# Below is the web address to the baxter interface which contains
-# all the class descriptions and functions.
-# http://api.rethinkrobotics.com/baxter_interface/html/index.html
-# Baxter's api reference is also invaluable. It describes how
-# all his components work: Limbs, cameras, cartesian endpoints,
-# grippers, sensors, etc.
-# http://sdk.rethinkrobotics.com/wiki/API_Reference
+
 import baxter_interface
-#this allows you to make sure that your software versions
-# on the workstation is the same as the software versions
-# Baxter is using. 
+ 
 from baxter_interface import CHECK_VERSION
 
 #These are baxter's core_msgs that allow use of
@@ -180,28 +129,10 @@ from baxter_core_msgs.srv import (
 )
 
 """ 
-YOUR CLASS IMPORTS
 
-Here is where your own class imports go if needed as
-you develop your program.
-the baxter_examples package shows how classes are called
-by other .py files if they are not in the same directory. Look at joint_recorder.py. 
-It imports the JointRecorder class using the line: "from baxter_examples import JointRecorder"
-Please note that the package contains a setup.py file that allows the import,
-the src folder that contains the class also has __init__.py, and CMakeLists.txt file
-has "catkin_python_setup()" uncommented.  
 """
 
-#Normally we are taught to NEVER NEVER NEVER use global variables.
-#In this particular case, the image_directory is only used to store
-# the images created by the canny edge, corners of the board, etc.
-# It also stores the setup.py file that contains the arm to be used
-# and the distance from the base of the gripper to the table. 
-# It's up to you if you want to change this. 
-#os.getenv is used to map a path.  Line 199 maps a path to the Golf
-#file which is in the home directory. This is where the saved images are stored.
-#Feel free to change the name of the folder from Golf to something else or 
-# even where it is located.  Just make sure that the path is correct.  
+
 image_directory = os.getenv("HOME") + "/Golf/"
 
 #End of header with all the imports
@@ -292,8 +223,8 @@ class Locate():
         self.cam_calib    = 0.0025                     # meters per pixel at 1 meter
         self.cam_x_offset = 0.045                      # camera gripper offset
         self.cam_y_offset = -0.01
-        self.width        =  960 #960                        # Camera resolution
-        self.height       = 600 #600
+        self.width        =  800 #960                        # Camera resolution
+        self.height       = 800 #600
 
 
         # Hough circle accumulator threshold and minimum radius. These were commented out since Hough circle not being used now.
@@ -305,9 +236,7 @@ class Locate():
         # parameters: size(image width and height).  Here we are using Baxter's hand camera resolutions.  
         # next is the bit depth of image elements. Most OpenCV functions use mono8 or bgr8.  Here we use 8.
         # Number of channels per pixel.  Most OpenCV functions support 1-4 channels.  We are using 1 channel. 
-        #self.canny = cv.CreateImage((self.width, self.height), 8, 1)
-        size1 = (self.width, self.height, 1)
-        self.canny = numpy.zeros(size1, numpy.int8)
+        self.canny = cv.CreateImage((self.width, self.height), 8, 1)
         """
         Canny uses two thresholds--an upper and lower.  If a pixel gradient is higher than the upper threshold,
         the pixel is accepted as an edge.  If a pixel gradient value is below the lower threshold, then it is rejected. 
@@ -322,11 +251,8 @@ class Locate():
         # minimum ball tray area
         self.min_area = 20000
 
-        # callback image -- creating blank image
-        #self.cv_image = cv.CreateImage((self.width, self.height), 8, 3)
-	size = (self.width, self.height, 3)
-	self.cv_image = numpy.zeros(size, numpy.int8)
-	
+        # callback image
+        self.cv_image = cv.CreateImage((self.width, self.height), 8, 3)
 
         # colours
         self.white = (255, 255, 255)
@@ -382,7 +308,6 @@ class Locate():
         the document, you will see where you can change the width and height from 800 800 to 960 600 respectively.
         Here is the path to the file:
         home/ros_ws/baxter_common/baxter_description/urdf/baxter_base/baxter_base.gazebo.xacro
-        """
         # reset cameras
         #self.reset_cameras()
 
@@ -397,7 +322,7 @@ class Locate():
         # open required camera...in our case it is the left_hand_camera.  It should open with
         # a resolution of 960, 600.  open_camera is a function in this program.
         #self.open_camera(self.limb, self.width, self.height)
-        
+        """
         # subscribe to required camera
         self.subscribe_to_camera(self.limb)
 
@@ -523,8 +448,7 @@ class Locate():
         almost_black = (1, 1, 1)
 
         pixel_list = [(x_in, y_in)]                   # first pixel is black save position
-        #cv.Set2D(image, y_in, x_in, almost_black)     # set pixel to almost black
-        cv.Set2D(cv.fromarray(image), y_in, x_in, almost_black)     # set pixel to almost black
+        cv.Set2D(image, y_in, x_in, almost_black)     # set pixel to almost black
         to_do = [(x_in, y_in - 1)]                    # add neighbours to to do list
         to_do.append([x_in, y_in + 1])
         to_do.append([x_in - 1, y_in])
@@ -532,11 +456,9 @@ class Locate():
 
         while len(to_do) > 0:
             x, y = to_do.pop()                             # get next pixel to test
-            #if cv.Get2D(image, y, x)[0] == self.black[0]:  # if black pixel found
-            if cv.Get2D(cv.fromarray(image), y, x)[0] == self.black[0]:  # if black pixel found
+            if cv.Get2D(image, y, x)[0] == self.black[0]:  # if black pixel found
                 pixel_list.append([x, y])                  # save pixel position
-                #cv.Set2D(image, y, x, almost_black)        # set pixel to almost black
-                cv.Set2D(cv.fromarray(image), y, x, almost_black)        # set pixel to almost black
+                cv.Set2D(image, y, x, almost_black)        # set pixel to almost black
                 to_do.append([x, y - 1])                   # add neighbours to to do list
                 to_do.append([x, y + 1])
                 to_do.append([x - 1, y])
@@ -546,8 +468,7 @@ class Locate():
 
     # Remove artifacts and find largest object
     def look_for_ball_tray(self, canny):
-        #width, height = cv.GetSize(canny)
-        width, height = canny.shape
+        width, height = cv.GetSize(canny)
 
         centre   = (0, 0)
         max_area = 0
@@ -555,13 +476,11 @@ class Locate():
         # for all but edge pixels
         for x in range(1, width - 2):
             for y in range(1, height - 2):
-                #if cv.Get2D(canny, y, x)[0] == self.black[0]:       # black pixel found
-                if cv.Get2D(cv.fromarray(canny), y, x)[0] == self.black[0]:       # black pixel found
+                if cv.Get2D(canny, y, x)[0] == self.black[0]:       # black pixel found
                     pixel_list = self.tree_walk(canny, x, y)        # tree walk pixel
                     if len(pixel_list) < self.min_area:             # if object too small
                         for l in pixel_list:
-                            #cv.Set2D(canny, l[1], l[0], self.white) # set pixel to white
-                            cv.Set2D(cv.fromarray(canny), l[1], l[0], self.white) # set pixel to white
+                            cv.Set2D(canny, l[1], l[0], self.white) # set pixel to white
                     else:                                           # if object found
                         n = len(pixel_list)
                         if n > max_area:                            # if largest object found
@@ -575,13 +494,10 @@ class Locate():
                             max_area = n                            # save area of object
 
         if max_area > 0:                                            # in tray found
-            #cv.Circle(canny, (centre), 9, (250, 250, 250), -1)      # mark tray centre
-            cv.Circle(cv.fromarray(canny), (centre), 9, (250, 250, 250), -1)      # mark tray centre
+            cv.Circle(canny, (centre), 9, (250, 250, 250), -1)      # mark tray centre
 
         # display the modified canny
-        #cv.ShowImage("Modified Canny", canny)
-        print "suppose to show a canny here"
-        cv2.imshow("Modified canny", canny)
+        cv.ShowImage("Modified Canny", canny)
 
         # 3ms wait
         cv.WaitKey(3)
@@ -589,9 +505,7 @@ class Locate():
 
     # flood fill edge of image to leave objects
     def flood_fill_edge(self, canny):
-        #width, height = cv.GetSize(canny)
-        width, height = canny.shape
-        canny = cv.fromarray(canny)
+        width, height = cv.GetSize(canny)
 
         #(name of array, row, column, value)
         # set boarder pixels to white
@@ -684,178 +598,7 @@ class Locate():
 
         return a
     """
-    # find next object of interest
-    def find_next_golf_ball(self, ball_data, iteration):
-        # if only one object then object found
-        if len(ball_data) == 1:
-            return ball_data[0]
-
-        # sort objects right to left
-        od = []
-        for i in range(len(ball_data)):
-            od.append(ball_data[i])
-
-        od.sort()
-
-        # if one ball is significantly to the right of the others
-        if od[1][0] - od[0][0] > 30:       # if ball significantly to right of the others
-            return od[0]                   # return right most ball
-        elif od[1][1] < od[0][1]:          # if right most ball below second ball
-            return od[0]                   # return lower ball
-        else:                              # if second ball below right most ball
-            return od[1]                   # return lower ball
-
-    # find gripper angle to avoid nearest neighbour
-    def find_gripper_angle(self, next_ball, ball_data):
-        # if only one ball any angle will do
-        if len(ball_data) == 1:
-            return self.yaw
-
-        # find nearest neighbour
-        neighbour = (0, 0)
-        min_d2    = float(self.width * self.width + self.height * self.height)
-
-        for i in range(len(ball_data)):
-            if ball_data[i][0] != next_ball[0] or ball_data[i][1] != next_ball[1]:
-                dx = float(ball_data[i][0]) - float(next_ball[0])   # NB x and y are ushort
-                dy = float(ball_data[i][1]) - float(next_ball[1])   # float avoids error
-                d2 = (dx * dx) + (dy * dy)
-                if d2 < min_d2:
-                    neighbour = ball_data[i]
-                    min_d2    = d2
-
-        # find best angle to avoid hitting neighbour
-        dx = float(next_ball[0]) - float(neighbour[0])
-        dy = float(next_ball[1]) - float(neighbour[1])
-        if abs(dx) < 1.0:
-            angle = - (math.pi / 2.0)             # avoid divide by zero
-        else:
-            angle = math.atan(dy / dx)            # angle in radians between -pi and pi
-        angle = angle + (math.pi / 2.0)           # rotate pi / 2 radians
-        if angle > math.pi / 2.0:                 # ensure angle between -pi and pi
-            angle = angle - math.pi
-
-        return - angle                            # return best angle to grip golf ball
-
-    # if ball near any of the ball tray places
-    def is_near_ball_tray(self, ball):
-        for i in self.ball_tray_place:
-            d2 = ((i[0] - ball[0]) * (i[0] - ball[0]))           \
-               + ((i[1] - ball[1]) * (i[1] - ball[1]))
-            if d2 < 0.0004:
-               return True
-
-        return False
-
-    # Use Hough circles to find ball centres (Only works with round objects)
-    def hough_it(self, n_ball, iteration):
-        # create gray scale image of balls
-        gray_image = cv.CreateImage((self.width, self.height), 8, 1)
-        cv.CvtColor(cv.fromarray(self.cv_image), gray_image, cv.CV_BGR2GRAY)
-
-        # create gray scale array of balls
-        gray_array = self.cv2array(gray_image)
-
-        # find Hough circles
-        circles = cv2.HoughCircles(gray_array, cv.CV_HOUGH_GRADIENT, 1, 40, param1=50,  \
-                  param2=self.hough_accumulator, minRadius=self.hough_min_radius,       \
-                  maxRadius=self.hough_max_radius)
-
-        # Check for at least one ball found
-        if circles is None:
-            # display no balls found message on head display
-            self.splash_screen("no balls", "found")
-            rospy.sleep(4)
-            # no point in continuing so exit with error message
-            # Add mechanism to reset Baxter when no balls found'
-            self.splash_screen('request reset?', 'enter Y or N')
-            answer = raw_input("Do you want to reset Baxter? Enter Y or N...also move the table out of the way ")
-            answer.upper()
-            print(answer)
-            if answer == 'Y':
-                print("Test Yes")
-            elif answer == 'N':
-                print("Test No")
-            sys.exit("ERROR - hough_it - No golf balls found")
-
-        circles = numpy.uint16(numpy.around(circles))
-
-        ball_data = {}
-        n_balls   = 0
-
-        circle_array = numpy.asarray(self.cv_image)
-
-        # check if golf ball is in ball tray
-        for i in circles[0,:]:
-            # convert to baxter coordinates
-            ball = self.pixel_to_baxter((i[0], i[1]), self.tray_distance)
-
-            if self.is_near_ball_tray(ball):
-                # draw the outer circle in red
-                cv2.circle(circle_array, (i[0], i[1]), i[2], (0, 0, 255), 2)
-                # draw the center of the circle in red
-                cv2.circle(circle_array, (i[0], i[1]), 2, (0, 0, 255), 3)
-            elif i[1] > 800:
-                # draw the outer circle in red
-                cv2.circle(circle_array, (i[0], i[1]), i[2], (0, 0, 255), 2)
-                # draw the center of the circle in red
-                cv2.circle(circle_array, (i[0], i[1]), 2, (0, 0, 255), 3)
-            else:
-                # draw the outer circle in green
-                cv2.circle(circle_array, (i[0], i[1]), i[2], (0, 255, 0), 2)
-                # draw the center of the circle in green
-                cv2.circle(circle_array, (i[0], i[1]), 2, (0, 255, 0), 3)
-
-                ball_data[n_balls]  = (i[0], i[1], i[2])
-                n_balls            += 1
-
-        circle_image = cv.fromarray(circle_array)
-
-        cv.ShowImage("Hough Circle", circle_image)
-
-        # 3ms wait
-        cv.WaitKey(3)
-
-        # display image on head monitor
-        font     = cv.InitFont(cv.CV_FONT_HERSHEY_SIMPLEX, 1.0, 1.0, 1)
-        position = (30, 60)
-        s = "Searching for golf balls"
-        cv.PutText(circle_image, s, position, font, self.white)
-        msg = cv_bridge.CvBridge().cv2_to_imgmsg(circle_array, encoding="bgr8")
-        self.pub.publish(msg)
-
-        if self.save_images:
-            # save image of Hough circles on raw image
-            file_name = self.image_dir                                                 \
-                      + "hough_circle_" + str(n_ball) + "_" + str(iteration) + ".jpg"
-            cv.SaveImage(file_name, circle_image)
-
-        # Check for at least one ball found
-        if n_balls == 0:                    # no balls found
-            # display no balls found message on head display
-            self.splash_screen("no balls", "found")
-            # less than 12 balls found, no point in continuing, exit with error message
-            #sys.exit("ERROR - hough_it - No golf balls found")
-
-            # Add mechanism to reset Baxter when no balls found
-            answer = raw_input("Do you want to reset Baxter? Enter Y or N...also move the table out of the way ")
-            answer.upper()
-            
-            if answer == 'Y':
-                print("Test Yes")
-            elif answer == 'N':
-                print("Test No")
-            sys.exit("ERROR - hough_it - No golf balls found")
-             
-
-        # select next ball and find it's position
-        next_ball = self.find_next_golf_ball(ball_data, iteration)
-
-        # find best gripper angle to avoid touching neighbouring ball
-        angle = self.find_gripper_angle(next_ball, ball_data)
-
-        # return next golf ball position and pickup angle
-        return next_ball, angle
+ 
     """
     #the original code imported conversions from moveit commander in the header.
     # This caused an error only on shut down---did not affect the program.  Rather than deal with errors
@@ -1027,13 +770,16 @@ class Locate():
         if self.save_images:
             # save raw image of ball tray
             file_name = self.image_dir + "ball_tray_" + str(iteration) + ".jpg"
-            #cv.SaveImage(file_name, cv.fromarray(self.cv_image))
-            cv2.imwrite(file_name, self.cv_image)
+            cv.SaveImage(file_name, cv.fromarray(self.cv_image))
+            width, height = cv.GetSize(cv.fromarray(self.cv_image))
+            print("Here is the width: {0} and here is the height: {1}.".format(width, height))
+
         # create an empty image variable, the same dimensions as our camera feed.
-        #gray = cv.CreateImage((cv.GetSize(cv.fromarray(self.cv_image))), 8, 1)
+        gray = cv.CreateImage((cv.GetSize(cv.fromarray(self.cv_image))), 8, 1)
+
         # convert the image to a grayscale image
-        #cv.CvtColor(cv.fromarray(self.cv_image), gray, cv.CV_BGR2GRAY)
-	gray = cv2.cvtColor(self.cv_image, cv2.COLOR_BGR2GRAY)
+        cv.CvtColor(cv.fromarray(self.cv_image), gray, cv.CV_BGR2GRAY)
+
         # display image on head monitor
         font     = cv.InitFont(cv.CV_FONT_HERSHEY_SIMPLEX, 1.0, 1.0, 1)
         position = (30, 60)
@@ -1047,18 +793,15 @@ class Locate():
         # he shows how to create a tracker bar to adjust the greyscale thresholds
         # http://mathalope.co.uk/2015/06/03/canny-edge-detection-app-with-opencv-python/
         # create a canny edge detection map of the greyscale image
-        #cv.Canny(gray, self.canny, self.canny_low, self.canny_high, 3)
-        self.canny = cv2.Canny(gray, self.canny_low, self.canny_high)
-
+        cv.Canny(gray, self.canny, self.canny_low, self.canny_high, 3)
+        
         # display the canny transformation
-        #cv.ShowImage("Canny Edge Detection", self.canny)
-        cv2.imshow("Canny Edge Detection", self.canny)
+        cv.ShowImage("Canny Edge Detection", self.canny)
 
         if self.save_images:
             # save Canny image of ball tray
             file_name = self.image_dir + "canny_tray_" + str(iteration) + ".jpg"
-            #cv.SaveImage(file_name, self.canny)
-	    cv2.imwrite(file_name, self.cv_image)
+            cv.SaveImage(file_name, self.canny)
 
         # flood fill edge of image to leave only objects
         self.flood_fill_edge(self.canny)
@@ -1272,182 +1015,7 @@ class Locate():
         
         self.find_places(corners)
     """
-    # This is code not being used right now.  Use it if you use the Hough Circles
-    # used to place camera over golf ball
-    def golf_ball_iterate(self, n_ball, iteration, ball_data):
-        # print iteration number
-        print "GOLF BALL", n_ball, "ITERATION ", iteration
-
-        # find displacement of ball from centre of image
-        pixel_dx    = (self.width / 2) - ball_data[0]
-        pixel_dy    = (self.height / 2) - ball_data[1]
-        pixel_error = math.sqrt((pixel_dx * pixel_dx) + (pixel_dy * pixel_dy))
-        error       = float(pixel_error * self.cam_calib * self.tray_distance)
-
-        x_offset = - pixel_dy * self.cam_calib * self.tray_distance
-        y_offset = - pixel_dx * self.cam_calib * self.tray_distance
-
-        # update pose and find new ball data
-        self.update_pose(x_offset, y_offset)
-        ball_data, angle = self.hough_it(n_ball, iteration)
-
-        # find displacement of ball from centre of image
-        pixel_dx    = (self.width / 2) - ball_data[0]
-        pixel_dy    = (self.height / 2) - ball_data[1]
-        pixel_error = math.sqrt((pixel_dx * pixel_dx) + (pixel_dy * pixel_dy))
-        error       = float(pixel_error * self.cam_calib * self.tray_distance)
-
-        return ball_data, angle, error
-    
-    # print all 6 arm coordinates (only required for programme development)
-    def print_arm_pose(self):
-        print("Starting print_arm_pose")
-        return
-        print("Past the return in print_arm_pose")
-        pi = math.pi
-
-        quaternion_pose = self.limb_interface.endpoint_pose()
-        position        = quaternion_pose['position']
-        quaternion      = quaternion_pose['orientation']
-        euler           = tf.transformations.euler_from_quaternion(quaternion)
-
-        print
-        print "             %s" % self.limb
-        print 'front back = %5.4f ' % position[0]
-        print 'left right = %5.4f ' % position[1]
-        print 'up down    = %5.4f ' % position[2]
-        print 'roll       = %5.4f radians %5.4f degrees' %euler[0], 180.0 * euler[0] / pi
-        print 'pitch      = %5.4f radians %5.4f degrees' %euler[1], 180.0 * euler[1] / pi
-        print 'yaw        = %5.4f radians %5.4f degrees' %euler[2], 180.0 * euler[2] / pi
-
-    # find all the golf balls and place them in the ball tray
-    def pick_and_place(self):
-        n_ball = 0
-        while True and n_ball < 12:              # assume no more than 12 golf balls
-            n_ball          += 1
-            iteration        = 0
-            angle            = 0.0
-
-            # use Hough circles to find balls and select one ball
-            next_ball, angle = self.hough_it(n_ball, iteration)
-
-            error     = 2 * self.ball_tolerance
-
-            print
-            print "Ball number ", n_ball
-            print "==============="
-
-            # iterate to find next golf ball
-            # if hunting to and fro accept error in position
-            while error > self.ball_tolerance and iteration < 10:
-                iteration               += 1
-                next_ball, angle, error  = self.golf_ball_iterate(n_ball, iteration, next_ball)
-
-            font     = cv.InitFont(cv.CV_FONT_HERSHEY_SIMPLEX, 1.0, 1.0, 1)
-            position = (30, 60)
-            s        = "Picking up golf ball"
-            cv.PutText(cv.fromarray(self.cv_image), s, position, font, self.white)
-            msg = cv_bridge.CvBridge().cv2_to_imgmsg(self.cv_image, encoding="bgr8")
-            #Commented this line out until I could find out where overlap coming from
-            #self.pub.publish(msg)
-
-            print "DROPPING BALL ANGLE =", angle * (math.pi / 180)
-            if angle != self.yaw:             # if neighbouring ball
-                pose = (self.pose[0],         # rotate gripper to avoid hitting neighbour
-                        self.pose[1],
-                        self.pose[2],
-                        self.pose[3],
-                        self.pose[4],
-                        angle)
-                self.baxter_ik_move(self.limb, pose)
-
-                cv.PutText(cv.fromarray(self.cv_image), s, position, font, self.white)
-                msg = cv_bridge.CvBridge().cv2_to_imgmsg(self.cv_image, encoding="bgr8")
-                self.pub.publish(msg)
-
-            # slow down to reduce scattering of neighbouring golf balls
-            self.limb_interface.set_joint_position_speed(0.1)
-
-            # move down to pick up ball
-            # I subtracted .012 from cam_x and .025 from cam_y
-            pose = (self.pose[0] + self.cam_x_offset - 0.012,
-                    self.pose[1] + self.cam_y_offset - 0.025,
-                    self.pose[2] + (0.112 - self.distance),
-                    #self.pose[2] + (self.ball_grip_height - self.ball_pickup_height),
-                    self.pose[3],
-                    self.pose[4],
-                    angle)
-            self.baxter_ik_move(self.limb, pose)
-            # print_arm_pose has an error for the roll, yaw, pitch...don't use
-            self.print_arm_pose()
-
-            # close the gripper
-            self.gripper.close()
-
-            # reset pose to what it originally was
-            #pose = (self.pose[0] + self.cam_x_offset,
-                    #self.pose[1] + self.cam_y_offset,
-                    #self.pose[2] + (0.112 - self.distance),
-                    #self.pose[2] + (self.ball_grip_height - self.ball_pickup_height),
-                    #self.pose[3],
-                    #self.pose[4],
-                    #angle)
-
-
-            s = "Moving to ball tray"
-            cv.PutText(cv.fromarray(self.cv_image), s, position, font, self.white)
-            msg = cv_bridge.CvBridge().cv2_to_imgmsg(self.cv_image, encoding="bgr8")
-            self.pub.publish(msg)
-
-            pose = (self.pose[0],
-                    self.pose[1],
-                    self.pose[2] + 0.198,
-                    #self.pose[2] + (self.ball_grip_height - (self.distance - self.tray_height)),
-                    self.pose[3],
-                    self.pose[4],
-                    self.yaw)
-            self.baxter_ik_move(self.limb, pose)
-
-            # speed up again
-            self.limb_interface.set_joint_position_speed(0.5)
-
-            # display current image on head display
-            cv.PutText(cv.fromarray(self.cv_image), s, position, font, self.white)
-            msg = cv_bridge.CvBridge().cv2_to_imgmsg(self.cv_image, encoding="bgr8")
-            self.pub.publish(msg)
-
-            # move dowm
-            pose = (self.ball_tray_place[n_ball - 1][0],
-                    self.ball_tray_place[n_ball - 1][1],
-                    #self.pose[2] - 0.19,
-                    self.pose[2] + (self.ball_grip_height - (self.distance - self.tray_height)),
-                    self.pose[3],
-                    self.pose[4],
-                    self.pose[5])
-            self.baxter_ik_move(self.limb, pose)
-
-            # display current image on head display
-            s = "Placing golf ball in ball tray"
-            cv.PutText(cv.fromarray(self.cv_image), s, position, font, self.white)
-            msg = cv_bridge.CvBridge().cv2_to_imgmsg(self.cv_image, encoding="bgr8")
-            self.pub.publish(msg)
-
-            # open the gripper
-            self.gripper.open()
-
-            # prepare to look for next ball
-            pose = (self.golf_ball_x,
-                    self.golf_ball_y,
-                    self.golf_ball_z,
-                    -1.0 * math.pi,
-                    0.0 * math.pi,
-                    0.0 * math.pi)
-            self.baxter_ik_move(self.limb, pose)
-
-        # display all balls found on head display
-        self.splash_screen("all balls", "found")
-
-        print "All balls found"
+ 
     """
 
     # display message on head display
@@ -1576,7 +1144,7 @@ def load_gazebo_models(table_pose=Pose(position=Point(x= .75, y=0.2, z=0.0)),
                        block_pose=Pose(position=Point(x=0.6, y=0.25, z=0.7825)),
                        block_reference_frame="world"):
     # Get Models' Path
-    model_path = rospkg.RosPack().get_path('test')+"/models/"
+    model_path = rospkg.RosPack().get_path('baby_steps')+"/models/"
     # Load Table SDF
     table_xml = ''
     with open (model_path + "cafe_table/model.sdf", "r") as table_file:
@@ -1625,7 +1193,7 @@ if __name__ == "__main__":
     # Remove models from the scene on shutdown
     #rospy.on_shutdown(delete_gazebo_models)
     #Wait for the All Clear from emulator startup
-    #rospy.wait_for_message("/robot/sim/started", Empty)
+    rospy.wait_for_message("/robot/sim/started", Empty)
 
     # get setup parameters---go to function with #2 by it
     limb, distance = get_setup()
@@ -1708,40 +1276,3 @@ if __name__ == "__main__":
     print("All done")
     #program starts the shut down process here
     
-    
-"""
-Some useful tf (transorm) formulas
-
-1) to convert from euler to quaternion:
-
-quaternion = tf.transformations.quaternion_from_euler(roll, pitch, yaw)
-#type(pose) = geometry_msgs.msg.Pose
-pose.orientation.x = quaternion[0]
-pose.orientation.y = quaternion[1]
-pose.orientation.z = quaternion[2]
-pose.orientation.w = quaternion[3]
-
-2) And to convert from quaternion to euler:
-
-#type(pose) = geometry_msgs.msg.Pose
-quaternion = (
-    pose.orientation.x,
-    pose.orientation.y,
-    pose.orientation.z,
-    pose.orientation.w)
-euler = tf.transformations.euler_from_quaternion(quaternion)
-roll = euler[0]
-pitch = euler[1]
-yaw = euler[2]
-
-roll_degrees = self.roll*180.0/self.pi
-pitch_degrees = self.pitch*180.0/self.pi
-yaw_degrees = self.yaw*180.0/self.pi
-
-**********************************************************
-There is now also tf2
-If you want to use tf2 you need to import it
-Also tutorials on the use of tf2 on the ros wiki
-
-tf_conversions.transformations.quaternion_from_euler(roll, pitch, yaw)
-"""
