@@ -178,8 +178,7 @@ class Locate():
 
         # required position accuracy in metres
         self.ball_tolerance = 0.005
-        self.tray_tolerance = 0.05
-
+        self.tray_tolerance = 0.02
  
 
         # An orientation for gripper fingers to be overhead and parallel to the obj
@@ -330,7 +329,7 @@ class Locate():
         self.distance      = distance
         #this will be the height down to the board once it is made and depending
         # on how thick it is.  Remember distances are in meters. 
-        self.tray_distance = distance - 0.075  
+        self.tray_distance = distance - 0.05  
        
 
         # move other arm out of harms way
@@ -866,7 +865,7 @@ class Locate():
         p[12] = (ref_x + (1 * dl_x) + (1 * ds_x), ref_y + (1 * dl_y) + (1 * ds_y))
         p[13] = (ref_x + (1 * dl_x) + (3 * ds_x), ref_y + (1 * dl_y) + (3 * ds_y))
         p[14] = (ref_x + (1 * dl_x) + (5 * ds_x), ref_y + (1 * dl_y) + (5 * ds_y))
-        p[15] = (ref_x + (7 * dl_x) + (7 * ds_x), ref_y + (1 * dl_y) + (1 * ds_y))
+        p[15] = (ref_x + (1 * dl_x) + (7 * ds_x), ref_y + (1 * dl_y) + (7 * ds_y))
 
         for i in range(16):
             # mark position of ball tray places ---different colors were used so you could correlate what the calculations
@@ -1225,9 +1224,9 @@ if __name__ == "__main__":
     print('\n' * 3)
     board_corners = list() 
     
-    for i in range (4)
-        locator.pose = [copy.copy(locator.ball_tray_corner[i][0]),
-                    copy.copy(locator.ball_tray_corner[i][1])-.035,
+    for i in range (4):
+        locator.pose = [copy.copy(locator.ball_tray_corner[i][0]) - .015,
+                    copy.copy(locator.ball_tray_corner[i][1]) - .045,
                     locator.golf_ball_z - .25,
                     locator.roll,
                     locator.pitch,
