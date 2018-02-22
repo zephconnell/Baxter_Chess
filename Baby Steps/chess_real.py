@@ -1225,41 +1225,16 @@ if __name__ == "__main__":
     print('\n' * 3)
     board_corners = list() 
     
-    locator.pose = [copy.copy(locator.ball_tray_corner[0][0]),
-                    copy.copy(locator.ball_tray_corner[0][1]),
+    for i in range (4)
+        locator.pose = [copy.copy(locator.ball_tray_corner[i][0]),
+                    copy.copy(locator.ball_tray_corner[i][1])-.035,
                     locator.golf_ball_z - .25,
                     locator.roll,
                     locator.pitch,
                     locator.yaw]
     
-    board_corners.append(locator.pose)
-
-    locator.pose = [copy.copy(locator.ball_tray_corner[1][0]),
-                    copy.copy(locator.ball_tray_corner[1][1]),
-                    locator.golf_ball_z -.25,
-                    locator.roll,
-                    locator.pitch,
-                    locator.yaw]
+        board_corners.append(locator.pose)
     
-    board_corners.append(locator.pose)
-
-    locator.pose = [copy.copy(locator.ball_tray_corner[2][0]),
-                    copy.copy(locator.ball_tray_corner[2][1]),
-                    locator.golf_ball_z -.25,
-                    locator.roll,
-                    locator.pitch,
-                    locator.yaw]
-    
-    board_corners.append(locator.pose)
-
-    locator.pose = [copy.copy(locator.ball_tray_corner[3][0]),
-                    copy.copy(locator.ball_tray_corner[3][1]),
-                    locator.golf_ball_z -.25,
-                    locator.roll,
-                    locator.pitch,
-                    locator.yaw]
-    
-    board_corners.append(locator.pose)
     #locator.baxter_ik_move(locator.limb, locator.pose)
     count = 0
     while count < len(board_corners):
