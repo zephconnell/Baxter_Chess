@@ -223,8 +223,8 @@ class Locate():
         self.cam_calib    = 0.0025                     # meters per pixel at 1 meter
         self.cam_x_offset = 0.045                      # camera gripper offset
         self.cam_y_offset = -0.01
-        self.width        =  800 #960                        # Camera resolution
-        self.height       = 800 #600
+        self.width        =  640 #960                        # Camera resolution
+        self.height       = 400 #600
 
 
         # Hough circle accumulator threshold and minimum radius. These were commented out since Hough circle not being used now.
@@ -1189,11 +1189,11 @@ if __name__ == "__main__":
     #it is highly unlikely that two nodes will have the same name. If two nodes have the same name,
     # the oldest node will be "killed"
     rospy.init_node("pick_and_place", anonymous = True)
-    load_gazebo_models()
+    #load_gazebo_models()
     # Remove models from the scene on shutdown
-    rospy.on_shutdown(delete_gazebo_models)
+    #rospy.on_shutdown(delete_gazebo_models)
     #Wait for the All Clear from emulator startup
-    rospy.wait_for_message("/robot/sim/started", Empty)
+    #rospy.wait_for_message("/robot/sim/started", Empty)
 
     # get setup parameters---go to function with #2 by it
     limb, distance = get_setup()
