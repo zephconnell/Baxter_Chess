@@ -1218,10 +1218,17 @@ if __name__ == "__main__":
 
     #this is how you pick and place for each piece that zeph will use for his voice command
     #number can be 0 to 64 where 0 is top left on picture, 63 is bottom right
-    print("\nPicking...")
-    locator.pick(board_spot[22])
-    print("\nPlacing...")
-    locator.place(board_spot[46])
+    while True:
+        pos1 = input("Where to pick from (between 0 and 63)")
+        while pos1>63 or pos1<0:
+	    pos1 = input("Where to pick from (between 0 and 63)")
+        pos2 = input("Where to place (between 0 and 63)")
+        while pos2>63 or pos2<0:
+	    pos2 = input("Where to place (between 0 and 63)")	
+        print("\nPicking...")
+        locator.pick(board_spot[pos1])
+        print("\nPlacing...")
+        locator.place(board_spot[pos2])
     
 
     print("All done")
