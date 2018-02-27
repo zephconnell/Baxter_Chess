@@ -265,6 +265,18 @@ class Locate():
         self.ball_tray_place = [(0.0,0.0),(0.0,0.0),(0.0,0.0),(0.0,0.0),
                                 (0.0,0.0),(0.0,0.0),(0.0,0.0),(0.0,0.0),
                                 (0.0,0.0),(0.0,0.0),(0.0,0.0),(0.0,0.0),
+                                (0.0,0.0),(0.0,0.0),(0.0,0.0),(0.0,0.0), 
+				(0.0,0.0),(0.0,0.0),(0.0,0.0),(0.0,0.0),
+                                (0.0,0.0),(0.0,0.0),(0.0,0.0),(0.0,0.0),
+                                (0.0,0.0),(0.0,0.0),(0.0,0.0),(0.0,0.0),
+                                (0.0,0.0),(0.0,0.0),(0.0,0.0),(0.0,0.0),
+				(0.0,0.0),(0.0,0.0),(0.0,0.0),(0.0,0.0),
+                                (0.0,0.0),(0.0,0.0),(0.0,0.0),(0.0,0.0),
+                                (0.0,0.0),(0.0,0.0),(0.0,0.0),(0.0,0.0),
+                                (0.0,0.0),(0.0,0.0),(0.0,0.0),(0.0,0.0),
+				(0.0,0.0),(0.0,0.0),(0.0,0.0),(0.0,0.0),
+                                (0.0,0.0),(0.0,0.0),(0.0,0.0),(0.0,0.0),
+                                (0.0,0.0),(0.0,0.0),(0.0,0.0),(0.0,0.0),
                                 (0.0,0.0),(0.0,0.0),(0.0,0.0),(0.0,0.0)]
 
         # Enable the actuators
@@ -849,49 +861,17 @@ class Locate():
         # they corrolate to the colors.  The order below is different than that of
         # the original. 
         p     = {}
-        p[0]  = (ref_x + (7 * dl_x) + (1 * ds_x), ref_y + (7 * dl_y) + (1 * ds_y))
-        p[1]  = (ref_x + (7 * dl_x) + (3 * ds_x), ref_y + (7 * dl_y) + (3 * ds_y))
-        p[2]  = (ref_x + (7 * dl_x) + (5 * ds_x), ref_y + (7 * dl_y) + (5 * ds_y))
-        p[3]  = (ref_x + (7 * dl_x) + (7 * ds_x), ref_y + (7 * dl_y) + (7 * ds_y))
-        p[4]  = (ref_x + (5 * dl_x) + (1 * ds_x), ref_y + (5 * dl_y) + (1 * ds_y))
-        p[5]  = (ref_x + (5 * dl_x) + (3 * ds_x), ref_y + (5 * dl_y) + (3 * ds_y))
-        p[6]  = (ref_x + (5 * dl_x) + (5 * ds_x), ref_y + (5 * dl_y) + (5 * ds_y))
-        p[7]  = (ref_x + (5 * dl_x) + (7 * ds_x), ref_y + (5 * dl_y) + (7 * ds_y))
-        p[8]  = (ref_x + (3 * dl_x) + (1 * ds_x), ref_y + (3 * dl_y) + (1 * ds_y))
-        p[9]  = (ref_x + (3 * dl_x) + (3 * ds_x), ref_y + (3 * dl_y) + (3 * ds_y))
-        p[10] = (ref_x + (3 * dl_x) + (5 * ds_x), ref_y + (3 * dl_y) + (5 * ds_y))
-        p[11] = (ref_x + (3 * dl_x) + (7 * ds_x), ref_y + (3 * dl_y) + (7 * ds_y))
-        #added these extra rows
-        p[12] = (ref_x + (1 * dl_x) + (1 * ds_x), ref_y + (1 * dl_y) + (1 * ds_y))
-        p[13] = (ref_x + (1 * dl_x) + (3 * ds_x), ref_y + (1 * dl_y) + (3 * ds_y))
-        p[14] = (ref_x + (1 * dl_x) + (5 * ds_x), ref_y + (1 * dl_y) + (5 * ds_y))
-        p[15] = (ref_x + (1 * dl_x) + (7 * ds_x), ref_y + (1 * dl_y) + (7 * ds_y))
-
-        for i in range(16):
+	tempcount = 0
+	for i in range(8):
+		for j in range(8):
+			p[tempcount] = (ref_x + (((8-i)+1) * dl_x) + ((j+1) * ds_x), ref_y + ((8-i) * dl_y) + ((j-1) * ds_y))
+			tempcount = tempcount + 1
+		
+        for i in range(64):
             # mark position of ball tray places ---different colors were used so you could correlate what the calculations
             #   above are doing. 
             #parameters are img, center, radius, circle color(bgr for lime green is (0,250,0)), -1 means that it will fill the shape)
-            if i >= 0  and i <= 3:
-                cv.Circle(cv.fromarray(self.cv_image), (int(p[i][0]), int(p[i][1])), 5, (0, 255, 0), -1) 
-                # ball tray places in baxter coordinates
-                self.ball_tray_place[i] = self.pixel_to_baxter(p[i], self.tray_distance)
-            if i > 3 and i <= 7:
-                cv.Circle(cv.fromarray(self.cv_image), (int(p[i][0]), int(p[i][1])), 5, (0, 0, 255), -1) #red in brg is (0, 0, 255)
-                # ball tray places in baxter coordinates
-                self.ball_tray_place[i] = self.pixel_to_baxter(p[i], self.tray_distance)
-            if i > 7 and i <= 11:
-                cv.Circle(cv.fromarray(self.cv_image), (int(p[i][0]), int(p[i][1])), 5, (255, 0, 0), -1)  #blue in brg is (255, 0, 0)
-                # ball tray places in baxter coordinates
-                self.ball_tray_place[i] = self.pixel_to_baxter(p[i], self.tray_distance)
-            if i > 11 and i <= 15:
-                cv.Circle(cv.fromarray(self.cv_image), (int(p[i][0]), int(p[i][1])), 5, (255, 0, 255), -1) #purple/pink in brg is (255, 0, 255)
-                # ball tray places in baxter coordinates
-                self.ball_tray_place[i] = self.pixel_to_baxter(p[i], self.tray_distance)
-                
-
-            # convert ball tray places in baxter coordinates  --this uses the formula from the web page: 
-            # http://sdk.rethinkrobotics.com/wiki/Worked_Example_Visual_Servoing
-             
+            cv.Circle(cv.fromarray(self.cv_image), (int(p[i][0]), int(p[i][1])), 5, (0, 255, 0), -1)  
             self.ball_tray_place[i] = self.pixel_to_baxter(p[i], self.tray_distance)
             
            
@@ -1222,32 +1202,28 @@ if __name__ == "__main__":
     print("**************************************")
     print("We are now going to move to all the corners and pick and place")
     print('\n' * 3)
-    board_corners = list() 
+    board_spot = list() 
     
-    for i in range (4):
-        locator.pose = [copy.copy(locator.ball_tray_corner[i][0]) - .015,
-                    copy.copy(locator.ball_tray_corner[i][1]) - .045,
+    for i in range (64):
+        locator.pose = [copy.copy(locator.ball_tray_place[i][0]) - .015,
+                    copy.copy(locator.ball_tray_place[i][1]) - .045,
                     locator.golf_ball_z - .25,
                     locator.roll,
                     locator.pitch,
                     locator.yaw]
     
-        board_corners.append(locator.pose)
+        board_spot.append(locator.pose)
     
     #locator.baxter_ik_move(locator.limb, locator.pose)
-    count = 0
-    while count < len(board_corners):
-        print('\n' *3)
-        print("\nPicking...")
-        locator.pick(board_corners[count])
-        print("\nPlacing...")
-        if count == 3:
-            locator.place(board_corners[count])
-            count += 1
-        else:
-            count += 1
-            locator.place(board_corners[count])
-    print("All done")
-    #program starts the shut down process here
+
+    #this is how you pick and place for each piece that zeph will use for his voice command
+    #number can be 0 to 64 where 0 is top left on picture, 63 is bottom right
+    print("\nPicking...")
+    locator.pick(board_spot[22])
+    print("\nPlacing...")
+    locator.place(board_spot[46])
     
 
+    print("All done")
+    #program starts the shut down process here
+   
