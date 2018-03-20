@@ -174,7 +174,7 @@ class Locate():
         self.save_images = True
 
         # this is borrowed from the pick and place demo from rethink for the simulator
-        self._hover_distance = .15
+        self._hover_distance = .2
 
         # required position accuracy in metres
         self.ball_tolerance = 0.005
@@ -204,7 +204,7 @@ class Locate():
         # start positions
         self.ball_tray_x = 0.50                        # x     = front back
         self.ball_tray_y = 0.30                        # y     = left right ----positive for y is to your left as you face forward
-        self.ball_tray_z = 0.15                        # z     = up down
+        self.ball_tray_z = 0.35                        # z     = up down
         self.golf_ball_x = 0.50                        # x     = front back ---- positive for x is forward--negative x is back behind you 0.50
         self.golf_ball_y = 0.00                        # y     = left right 
         self.golf_ball_z = 0.15                        # z     = up down  
@@ -222,8 +222,8 @@ class Locate():
         self.cam_calib    = 0.0025                     # meters per pixel at 1 meter
         self.cam_x_offset = 0.045                      # camera gripper offset
         self.cam_y_offset = -0.01
-        self.width        =  640 #960                        # Camera resolution
-        self.height       = 400 #600
+        self.width        = 960 #640                       # Camera resolution
+        self.height       = 600 #400
 
 
         # Hough circle accumulator threshold and minimum radius. These were commented out since Hough circle not being used now.
@@ -320,20 +320,22 @@ class Locate():
         Here is the path to the file:
         home/ros_ws/baxter_common/baxter_description/urdf/baxter_base/baxter_base.gazebo.xacro
         # reset cameras
-        #self.reset_cameras()
+	
+	"""
+        self.reset_cameras()
 
         # when the left camera closed, the power was sent to the right and head cameras
-        #self.close_camera("left")
+        self.close_camera("left")
         
-        #self.close_camera("right")
+        self.close_camera("right")
         #now we close the head camera and the power should go back to the right and 
         # left hand camera
-        #self.close_camera("head")
+        self.close_camera("head")
 
         # open required camera...in our case it is the left_hand_camera.  It should open with
         # a resolution of 960, 600.  open_camera is a function in this program.
-        #self.open_camera(self.limb, self.width, self.height)
-        """
+        self.open_camera(self.limb, self.width, self.height)
+        
         # subscribe to required camera
         self.subscribe_to_camera(self.limb)
 
@@ -794,7 +796,7 @@ class Locate():
         # display image on head monitor
         font     = cv.InitFont(cv.CV_FONT_HERSHEY_SIMPLEX, 1.0, 1.0, 1)
         position = (30, 60)
-        cv.PutText(cv.fromarray(self.cv_image), "Looking for ball tray", position, font, self.white)
+        cv.PutText(cv.fromarray(self.cv_image), "Looking for Chess Board", position, font, self.white)
         msg = cv_bridge.CvBridge().cv2_to_imgmsg(self.cv_image, encoding="bgr8")
         self.pub.publish(msg)
 
@@ -864,7 +866,7 @@ class Locate():
 	tempcount = 0
 	for i in range(8):
 		for j in range(8):
-			p[tempcount] = (ref_x + (((8-i)+1) * dl_x) + ((j+1) * ds_x), ref_y + ((8-i) * dl_y) + ((j-1) * ds_y))
+			p[tempcount] = (ref_x + (((8-i)+.5) * dl_x) + ((j+.5) * ds_x), ref_y + ((8-i-.5) * dl_y) + ((j-1-.5) * ds_y))
 			tempcount = tempcount + 1
 		
         for i in range(64):
@@ -1068,6 +1070,9 @@ class Locate():
         # retract to clear object
         self._retract()
 
+    def middle(self,pose):
+        # servo above pose
+        self._approach(pose)
 
     def place(self, pose):
         # servo above pose
@@ -1207,7 +1212,7 @@ if __name__ == "__main__":
     for i in range (64):
         locator.pose = [copy.copy(locator.ball_tray_place[i][0]) - .015,
                     copy.copy(locator.ball_tray_place[i][1]) - .045,
-                    locator.golf_ball_z - .25,
+                    locator.golf_ball_z - .27,
                     locator.roll,
                     locator.pitch,
                     locator.yaw]
@@ -1227,10 +1232,13 @@ if __name__ == "__main__":
 	    pos2 = input("Where to place (between 0 and 63)")	
         print("\nPicking...")
         locator.pick(board_spot[pos1])
+	print("middle ground...")
+	locator.middle(board_spot[28])
         print("\nPlacing...")
         locator.place(board_spot[pos2])
     
 
     print("All done")
     #program starts the shut down process here
-   
+    
+
