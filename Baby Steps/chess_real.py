@@ -202,8 +202,8 @@ class Locate():
         #self.balls_found = 0
 
         # start positions
-        self.ball_tray_x = 0.50                        # x     = front back
-        self.ball_tray_y = 0.30                        # y     = left right ----positive for y is to your left as you face forward
+        self.ball_tray_x = 0.5 #.5                       # x     = front back
+        self.ball_tray_y = 0.3  #.3                      # y     = left right ----positive for y is to your left as you face forward
         self.ball_tray_z = 0.35                        # z     = up down
         self.golf_ball_x = 0.50                        # x     = front back ---- positive for x is forward--negative x is back behind you 0.50
         self.golf_ball_y = 0.00                        # y     = left right 
@@ -322,19 +322,20 @@ class Locate():
         # reset cameras
 	
 	"""
-        self.reset_cameras()
+        
+	#self.reset_cameras()
 
         # when the left camera closed, the power was sent to the right and head cameras
-        self.close_camera("left")
+        #self.close_camera("left")
         
-        self.close_camera("right")
+        #self.close_camera("right")
         #now we close the head camera and the power should go back to the right and 
         # left hand camera
-        self.close_camera("head")
+        #self.close_camera("head")
 
         # open required camera...in our case it is the left_hand_camera.  It should open with
         # a resolution of 960, 600.  open_camera is a function in this program.
-        self.open_camera(self.limb, self.width, self.height)
+        #self.open_camera(self.limb, self.width, self.height)
         
         # subscribe to required camera
         self.subscribe_to_camera(self.limb)
@@ -1212,7 +1213,7 @@ class Locate():
         
 
     def pick(self, pose):
-"""
+        """
         n_ball = 0
         n_ball          += 1
         iteration        = 0
@@ -1260,7 +1261,7 @@ class Locate():
         # close the gripper
         self.gripper.close()
 
-"""
+        """
 
 
         # open the gripper
@@ -1414,12 +1415,36 @@ if __name__ == "__main__":
     board_spot = list() 
     
     for i in range (64):
-        locator.pose = [copy.copy(locator.ball_tray_place[i][0]) - .015,
-                    copy.copy(locator.ball_tray_place[i][1]) - .045,
-                    locator.golf_ball_z - .27,
-                    locator.roll,
-                    locator.pitch,
-                    locator.yaw]
+	if i%8 <= 3:
+		if i >= 32:
+			locator.pose = [copy.copy(locator.ball_tray_place[i][0]) -.025, #-.015
+                    		copy.copy(locator.ball_tray_place[i][1])-.075, #-.045
+                    		locator.golf_ball_z - .27,
+                    		locator.roll,
+                    		locator.pitch,
+                    		locator.yaw]
+		else:
+			locator.pose = [copy.copy(locator.ball_tray_place[i][0]) -.035, #-.015
+                    		copy.copy(locator.ball_tray_place[i][1])-.075, #-.045
+                    		locator.golf_ball_z - .27,
+                    		locator.roll,
+                    		locator.pitch,
+                    		locator.yaw]
+	else:
+		if i >= 32:
+			locator.pose = [copy.copy(locator.ball_tray_place[i][0]) -.025, #-.015
+                    		copy.copy(locator.ball_tray_place[i][1])-.045, #-.045
+                    		locator.golf_ball_z - .27,
+                    		locator.roll,
+                    		locator.pitch,
+                    		locator.yaw]
+		else:	
+        		locator.pose = [copy.copy(locator.ball_tray_place[i][0]) -.025, #-.015
+                    		copy.copy(locator.ball_tray_place[i][1])-.055, #-.045
+                    		locator.golf_ball_z - .27,
+                    		locator.roll,
+                    		locator.pitch,
+                    		locator.yaw]
     
         board_spot.append(locator.pose)
     
