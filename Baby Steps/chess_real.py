@@ -147,7 +147,7 @@ class Locate():
         self.limb           = arm
         self._rp = rospkg.RosPack()
         #my package is called test.  You need to change this to the name of your package.
-        self._images = (self._rp.get_path('baby_steps') + '/share/images')
+        self._images = (self._rp.get_path('baby_steps') + '/Share/images')
         self.limb_interface = baxter_interface.Limb(self.limb) 
         self._joint_names = self.limb_interface.joint_names()       
         print("Getting robot state.... ")
@@ -174,7 +174,7 @@ class Locate():
         self.save_images = True
 
         # this is borrowed from the pick and place demo from rethink for the simulator
-        self._hover_distance = .2
+        self._hover_distance = .1
 
         # required position accuracy in metres
         self.ball_tolerance = 0.005
@@ -227,9 +227,9 @@ class Locate():
 
 
         # Hough circle accumulator threshold and minimum radius. These were commented out since Hough circle not being used now.
-        #self.hough_accumulator = 35
-        #self.hough_min_radius  = 13
-        #self.hough_max_radius  = 35
+        self.hough_accumulator = 35
+        self.hough_min_radius  = 10#13
+        self.hough_max_radius  = 50#35
 
         # canny image-------creates an image header 
         # parameters: size(image width and height).  Here we are using Baxter's hand camera resolutions.  
@@ -832,9 +832,35 @@ class Locate():
             print("Here are the coordinates of ball_tray_centre: ", ball_tray_centre)
 
         return ball_tray_centre
+    
+    # used to place camera over golf ball
+    def golf_ball_iterate(self, n_ball, iteration, ball_data):
+        # print iteration number
+        print "GOLF BALL", n_ball, "ITERATION ", iteration
 
-    # find next object of interest
+        # find displacement of ball from centre of image
+        pixel_dx    = (self.width / 2) - ball_data[0]
+        pixel_dy    = (self.height / 2) - ball_data[1]
+        pixel_error = math.sqrt((pixel_dx * pixel_dx) + (pixel_dy * pixel_dy))
+        error       = float(pixel_error * self.cam_calib * self.tray_distance)
+
+        x_offset = - pixel_dy * self.cam_calib * self.tray_distance
+        y_offset = - pixel_dx * self.cam_calib * self.tray_distance
+
+        # update pose and find new ball data
+        self.update_pose(x_offset, y_offset)
+        ball_data, angle = self.hough_it(n_ball, iteration)
+
+        # find displacement of ball from centre of image
+        pixel_dx    = (self.width / 2) - ball_data[0]
+        pixel_dy    = (self.height / 2) - ball_data[1]
+        pixel_error = math.sqrt((pixel_dx * pixel_dx) + (pixel_dy * pixel_dy))
+        error       = float(pixel_error * self.cam_calib * self.tray_distance)
+
+        return ball_data, angle, error
+
     def find_next_golf_ball(self, ball_data, iteration):
+        print("We are in find_next_golf_ball and here is ball_data: ", ball_data)
         # if only one object then object found
         if len(ball_data) == 1:
             return ball_data[0]
@@ -902,24 +928,39 @@ class Locate():
     def hough_it(self, n_ball, iteration):
         # create gray scale image of balls
         gray_image = cv.CreateImage((self.width, self.height), 8, 1)
-        cv.CvtColor(self.cv_image, gray_image, cv.CV_BGR2GRAY)
-
+        cv.CvtColor(cv.fromarray(self.cv_image), gray_image, cv.CV_BGR2GRAY)
         # create gray scale array of balls
         gray_array = self.cv2array(gray_image)
-
+        print("created a gray_array")
+        rospy.sleep(5)
         # find Hough circles
         circles = cv2.HoughCircles(gray_array, cv.CV_HOUGH_GRADIENT, 1, 40, param1=50,  \
                   param2=self.hough_accumulator, minRadius=self.hough_min_radius,       \
                   maxRadius=self.hough_max_radius)
-
+        count = 0
+        while circles is None and count != 5:
+            gray_image = cv.CreateImage((self.width, self.height), 8, 1)
+            cv.CvtColor(cv.fromarray(self.cv_image), gray_image, cv.CV_BGR2GRAY)
+            # create gray scale array of balls
+            gray_array = self.cv2array(gray_image)
+            print("created a gray_array")
+            rospy.sleep(5)
+            # find Hough circles
+            circles = cv2.HoughCircles(gray_array, cv.CV_HOUGH_GRADIENT, 1, 40, param1=50,  \
+                      param2=self.hough_accumulator, minRadius=self.hough_min_radius,       \
+                      maxRadius=self.hough_max_radius)
+            count = count + 1
+            print("here is count: ", count)
         # Check for at least one ball found
         if circles is None:
             # display no balls found message on head display
             self.splash_screen("no balls", "found")
             # no point in continuing so exit with error message
             sys.exit("ERROR - hough_it - No golf balls found")
-
+	    
+        print("Here is the value of circles before numpy.around: ", circles)
         circles = numpy.uint16(numpy.around(circles))
+        print("Here is the value of circles: ", circles)
 
         ball_data = {}
         n_balls   = 0
@@ -936,11 +977,15 @@ class Locate():
                 cv2.circle(circle_array, (i[0], i[1]), i[2], (0, 0, 255), 2)
                 # draw the center of the circle in red
                 cv2.circle(circle_array, (i[0], i[1]), 2, (0, 0, 255), 3)
+                ball_data[n_balls]  = (i[0], i[1], i[2])
+                n_balls            += 1
             elif i[1] > 800:
                 # draw the outer circle in red
                 cv2.circle(circle_array, (i[0], i[1]), i[2], (0, 0, 255), 2)
                 # draw the center of the circle in red
                 cv2.circle(circle_array, (i[0], i[1]), 2, (0, 0, 255), 3)
+                ball_data[n_balls]  = (i[0], i[1], i[2])
+                n_balls            += 1
             else:
                 # draw the outer circle in green
                 cv2.circle(circle_array, (i[0], i[1]), i[2], (0, 255, 0), 2)
@@ -950,33 +995,35 @@ class Locate():
                 ball_data[n_balls]  = (i[0], i[1], i[2])
                 n_balls            += 1
 
-        circle_image = cv.fromarray(circle_array)
-
-        cv.ShowImage("Hough Circle", circle_image)
-
+        #circle_image = cv.fromarray(circle_array)
+        circle_image = circle_array
+        #cv.ShowImage("Hough Circle", circle_image)
+        cv2.imshow('circle', circle_image)
         # 3ms wait
         cv.WaitKey(3)
-
+        circle = cv.fromarray(circle_image)
         # display image on head monitor
         font     = cv.InitFont(cv.CV_FONT_HERSHEY_SIMPLEX, 1.0, 1.0, 1)
         position = (30, 60)
-        s = "Searching for piece"
-        cv.PutText(circle_image, s, position, font, self.white)
-        msg = cv_bridge.CvBridge().cv_to_imgmsg(circle_image, encoding="bgr8")
+        s = "Searching for golf balls"
+        cv.PutText(circle, s, position, font, self.white)
+        msg = cv_bridge.CvBridge().cv2_to_imgmsg(circle_image, encoding= "bgr8")
         self.pub.publish(msg)
 
         if self.save_images:
             # save image of Hough circles on raw image
             file_name = self.image_dir                                                 \
                       + "hough_circle_" + str(n_ball) + "_" + str(iteration) + ".jpg"
-            cv.SaveImage(file_name, circle_image)
+            cv.SaveImage(file_name, circle)
 
         # Check for at least one ball found
         if n_balls == 0:                    # no balls found
             # display no balls found message on head display
             self.splash_screen("no balls", "found")
             # less than 12 balls found, no point in continuing, exit with error message
-            sys.exit("ERROR - hough_it - No golf balls found")
+            #sys.exit("ERROR - hough_it - No golf balls found")
+            print("No balls found in second part")
+            
 
         # select next ball and find it's position
         next_ball = self.find_next_golf_ball(ball_data, iteration)
@@ -986,6 +1033,7 @@ class Locate():
 
         # return next golf ball position and pickup angle
         return next_ball, angle
+
     # find places for golf balls
     def find_places(self, c):
         # find long side of ball tray
@@ -1149,9 +1197,6 @@ class Locate():
             (ok, corners) = self.find_corners(ball_tray_centre)
         
         self.find_places(corners)
-    """
- 
-    """
 
     # display message on head display
     def splash_screen(self, s1, s2):
@@ -1213,6 +1258,10 @@ class Locate():
         
 
     def pick(self, pose):
+        # open the gripper
+        self.gripper_open()
+        # servo above pose
+        self._approach(pose)
         """
         n_ball = 0
         n_ball          += 1
@@ -1232,8 +1281,8 @@ class Locate():
         font     = cv.InitFont(cv.CV_FONT_HERSHEY_SIMPLEX, 1.0, 1.0, 1)
         position = (30, 60)
         s        = "Picking up golf ball"
-        cv.PutText(self.cv_image, s, position, font, self.white)
-        msg = cv_bridge.CvBridge().cv_to_imgmsg(self.cv_image, encoding="bgr8")
+        cv.PutText(cv.fromarray(self.cv_image), s, position, font, self.white)
+        msg = cv_bridge.CvBridge().cv2_to_imgmsg(self.cv_image, encoding="bgr8")
         self.pub.publish(msg)
         print "DROPPING BALL ANGLE =", angle * (math.pi / 180)
         if angle != self.yaw:             # if neighbouring ball
@@ -1244,8 +1293,8 @@ class Locate():
                     self.pose[4],
                     angle)
             self.baxter_ik_move(self.limb, pose)
-            cv.PutText(self.cv_image, s, position, font, self.white)
-            msg = cv_bridge.CvBridge().cv_to_imgmsg(self.cv_image, encoding="bgr8")
+            cv.PutText(cv.fromarray(self.cv_image), s, position, font, self.white)
+            msg = cv_bridge.CvBridge().cv2_to_imgmsg(self.cv_image, encoding="bgr8")
             self.pub.publish(msg)
         # slow down to reduce scattering of neighbouring golf balls
         self.limb_interface.set_joint_position_speed(0.1)
@@ -1257,17 +1306,9 @@ class Locate():
                 self.pose[4],
                 angle)
         self.baxter_ik_move(self.limb, pose)
-        self.print_arm_pose()
-        # close the gripper
-        self.gripper.close()
+        #self.print_arm_pose()
 
         """
-
-
-        # open the gripper
-        self.gripper_open()
-        # servo above pose
-        self._approach(pose)
         # servo to pose
         self._servo_to_pose(pose)
         # close gripper
@@ -1409,24 +1450,21 @@ if __name__ == "__main__":
 
     # going to use some of the pick and place code from the baxter simulator ik demo
     #  to have Baxter move his arms to all the corners. 
-    print("**************************************")
-    print("We are now going to move to all the corners and pick and place")
-    print('\n' * 3)
     board_spot = list() 
-    
+    raw_input("Press Enter to start: ")
     for i in range (64):
 	if i%8 <= 3:
 		if i >= 32:
 			locator.pose = [copy.copy(locator.ball_tray_place[i][0]) -.025, #-.015
                     		copy.copy(locator.ball_tray_place[i][1])-.075, #-.045
-                    		locator.golf_ball_z - .27,
+                    		locator.golf_ball_z - .30,
                     		locator.roll,
                     		locator.pitch,
                     		locator.yaw]
 		else:
 			locator.pose = [copy.copy(locator.ball_tray_place[i][0]) -.035, #-.015
                     		copy.copy(locator.ball_tray_place[i][1])-.075, #-.045
-                    		locator.golf_ball_z - .27,
+                    		locator.golf_ball_z - .30,
                     		locator.roll,
                     		locator.pitch,
                     		locator.yaw]
@@ -1434,14 +1472,14 @@ if __name__ == "__main__":
 		if i >= 32:
 			locator.pose = [copy.copy(locator.ball_tray_place[i][0]) -.025, #-.015
                     		copy.copy(locator.ball_tray_place[i][1])-.045, #-.045
-                    		locator.golf_ball_z - .27,
+                    		locator.golf_ball_z - .30,
                     		locator.roll,
                     		locator.pitch,
                     		locator.yaw]
 		else:	
         		locator.pose = [copy.copy(locator.ball_tray_place[i][0]) -.025, #-.015
                     		copy.copy(locator.ball_tray_place[i][1])-.055, #-.045
-                    		locator.golf_ball_z - .27,
+                    		locator.golf_ball_z - .30,
                     		locator.roll,
                     		locator.pitch,
                     		locator.yaw]
