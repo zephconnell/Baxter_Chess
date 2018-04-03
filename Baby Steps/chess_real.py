@@ -70,6 +70,8 @@ from gazebo_msgs.srv import (
     DeleteModel,
 )
 
+import imutils
+
 """
 PYTHON IMPORTS
 """
@@ -81,8 +83,8 @@ As you get more familiar with Open CV, you may wish to transition to updated ver
 Just be aware that there may be package dependency as well as compatibility issues with cv_bridge and
 move cautiously. 
 """
-import cv;
-import cv2;
+import cv
+import cv2
 #opencv images are converted to and from Numpy arrays
 import numpy
 #python module for basic math functions.  In this program you need it for the sqrt()
@@ -174,7 +176,7 @@ class Locate():
         self.save_images = True
 
         # this is borrowed from the pick and place demo from rethink for the simulator
-        self._hover_distance = .1
+        self._hover_distance = .07
 
         # required position accuracy in metres
         self.ball_tolerance = 0.005
@@ -344,7 +346,7 @@ class Locate():
         self.distance      = distance
         #this will be the height down to the board once it is made and depending
         # on how thick it is.  Remember distances are in meters. 
-        self.tray_distance = distance - 0.05  
+        self.tray_distance = distance - 0 
        
 
         # move other arm out of harms way
@@ -1221,6 +1223,87 @@ class Locate():
         msg = cv_bridge.CvBridge().cv2_to_imgmsg(splash_array, encoding="bgr8")
         self.pub.publish(msg)
 
+
+
+    def find_offset_pose(self, pose):
+        pose1 = copy.deepcopy(pose)
+        print("Here is the pose coming into find_offset_pose: ", pose1)
+        list_of_circles = {}
+        file_name = self.image_dir + "circles" + ".jpg"
+        cv.SaveImage(file_name, cv.fromarray(self.cv_image))
+        image = cv2.imread(file_name)
+        cv2.imshow("Test Circle", image)
+        cv2.waitKey(0)
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        blurred = cv2.GaussianBlur(gray, (5,5),0)
+        thresh = cv2.threshold(blurred,40, 255, cv2.THRESH_BINARY)[1]
+        cv2.imshow("Threshold Picture", thresh)
+        thresh = cv2.bitwise_not(thresh)
+        cv2.imshow("Threshold Inverted", thresh)
+
+        #find contours in the threshold image
+        cnts = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL,
+            cv2.CHAIN_APPROX_SIMPLE)
+        cnts = cnts[0] if imutils.is_cv2() else cnts[1]
+        
+        circle_centers = []
+        closest_point = (0,0)
+        distance = 10000.00
+        # loop over the contours
+        for c in cnts[0:3]:
+	    # compute the center of the contour
+            point = (0,0)
+	    M = cv2.moments(c)
+
+	    print("The moments")
+	    print(M)
+	    
+	    cX = int(M["m10"] / M["m00"])
+	    cY = int(M["m01"] / M["m00"])
+            #shape = self.sd.detect(c)
+            #print("Here is the value of shape: ", shape)
+            center = str(cX) + ", " + str(cY)
+            point = cX, cY
+            print("Here is the value of point: ", point)
+            #convert to baxter coordinates.    
+            ball = self.pixel_to_baxter(point, self.distance - .05)
+            #find distance between center where contour found and desired pose.
+	    print("Before Distance calculation") 
+            distance_new = ((ball[0] - pose[0]) * (ball[0] - pose[0])) + ((ball[1] - pose[1]) * (ball[1] - pose[1]))
+	    print("After Distance Calculation")
+            if distance_new < distance:
+                distance = distance_new
+                closest_point = ball[0], ball[1]
+            center = str(ball[0]) + ", " + str(ball[1])
+            print("Here is the value of ball after change to pixel_to_baxter: ", ball)
+            circle_centers.append(ball)
+            print("Here is the value of circle_centers in the for-loop: ", circle_centers)
+            print('\n' * 2)
+	    # draw the contour and center of the shape on the image
+	    cv2.drawContours(image, [c], -1, (0, 255, 0), 2)
+	    cv2.circle(image, (cX, cY), 7, (255, 255, 255), -1)
+	    cv2.putText(image, center, (cX - 20, cY - 20),
+		cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
+ 
+	    # show the image
+	    cv2.imshow("Image", image)
+	    cv2.waitKey(0)
+        print("Here is the value of the closest point outside the for-loop: ", closest_point)
+        #calculate the offsets from where you want to go to where the actual contour is located. 
+        """
+        x_offset = closest_point[0] - pose[0]
+        y_offset = closest_point[1] - pose[1]
+        if abs(x_offset) > 0.01:
+            pose1[0] = pose[0] + x_offset
+        if abs(y_offset) > 0.01:
+            pose1[1] = pose[1] + y_offset
+        """
+	pose1[0] = closest_point[0]
+	pose1[1] = closest_point[1] - .12
+        print("The updated version of pose1: ", pose1)
+        return pose1
+
+
     def gripper_open(self):
         self.gripper.open()
         rospy.sleep(1.0)
@@ -1309,8 +1392,12 @@ class Locate():
         #self.print_arm_pose()
 
         """
+
+	pose_offset = self.find_offset_pose(pose)
+	# servo above pose
+        self._approach(pose_offset)
         # servo to pose
-        self._servo_to_pose(pose)
+        self._servo_to_pose(pose_offset)
         # close gripper
         self.gripper_close()
         # retract to clear object
@@ -1483,7 +1570,6 @@ if __name__ == "__main__":
                     		locator.roll,
                     		locator.pitch,
                     		locator.yaw]
-    
         board_spot.append(locator.pose)
     
     #locator.baxter_ik_move(locator.limb, locator.pose)
