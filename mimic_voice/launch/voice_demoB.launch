@@ -1,9 +1,0 @@
-<launch>
-  <node name="mimic_voice_demoB" pkg="mimic_voice" 
-        type="mimic_voice_demoB.py" output="screen" />
-  <node name="voice" pkg="mimic_voice" 
-        type="voice.py" output="screen" />
-  <node name="speaker" pkg="mimic_voice" 
-       type="pyttsx_server.py" output="screen" />
-
-</launch>
