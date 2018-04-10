@@ -11,10 +11,14 @@ from std_msgs.msg import (
 
 import rospkg
 
+#import and set up virtual chess logic classes
 from Game import Game
 game = Game()
 game.initial_board.initialize_board()
 game.create_piece_dict()
+
+#import class for clean shutdown
+from neutral import Reset
 
 class Voice:
     def __init__(self):
@@ -26,7 +30,7 @@ class Voice:
         self.rate = 5
         self.r = rospy.Rate(self.rate)
 
-        self.message = 'sayonara'
+        self.message = 'nothing yet'
         
         # A flag to determine whether or not voice control is paused
         self.paused = False
@@ -69,7 +73,16 @@ class Voice:
             return       
         
         if command == 'shutdown':
-            #do good shutdown thing
+            """
+            print("Initializing node...")
+            rospy.init_node("reset", anonymous = True)
+            reset = Reset()
+            reset.set_neutral()
+            reset.reset_facescreen()
+            reset.grippers_reset()
+            reset.disable_motors()
+            print("\nBaxter's arms now in neutral position, led display back to rethink log and motors have been disabled.")
+            """
             return
 
         piece = 'none'
