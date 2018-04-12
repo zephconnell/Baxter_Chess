@@ -103,7 +103,7 @@ import sys
 
 #imports a module which has several string classes and useful functions
 import string
-
+from shapedetector import ShapeDetector
 
 import random
 
@@ -145,6 +145,7 @@ image_directory = os.getenv("HOME") + "/Golf/"
 class Locate():
     def __init__(self, arm, distance):
         global image_directory
+        self.sd = ShapeDetector()
         # arm ("left" or "right")
         self.limb           = arm
         self._rp = rospkg.RosPack()
@@ -180,7 +181,7 @@ class Locate():
 
         # required position accuracy in metres
         self.ball_tolerance = 0.005
-        self.tray_tolerance = 0.02
+        self.tray_tolerance = 0.007
  
 
         # An orientation for gripper fingers to be overhead and parallel to the obj
@@ -221,9 +222,9 @@ class Locate():
                      self.overhead_orientation]
 
         # camera parameters (NB. other parameters in open_camera)****the description for how this was calculated is on the website
-        self.cam_calib    = 0.0025                     # meters per pixel at 1 meter
-        self.cam_x_offset = 0.045                      # camera gripper offset
-        self.cam_y_offset = -0.01
+        self.cam_calib    = 0.0025                   # meters per pixel at 1 meter .0025
+        self.cam_x_offset = 0.042                      # camera gripper offset
+        self.cam_y_offset = -0.081			#-.01 or -.015
         self.width        = 960 #640                       # Camera resolution
         self.height       = 600 #400
 
@@ -452,10 +453,15 @@ class Locate():
 
     # convert image pixel to Baxter point
     def pixel_to_baxter(self, px, dist):
-        x = ((px[1] - (self.height / 2)) * self.cam_calib * dist)                \
-          + self.pose[0] + self.cam_x_offset
-        y = ((px[0] - (self.width / 2)) * self.cam_calib * dist)                 \
-          + self.pose[1] + self.cam_y_offset
+        x = ((px[1] - (self.height / 2)) * self.cam_calib * dist) + self.pose[0] + self.cam_x_offset
+        y = ((px[0] - (self.width / 2)) * self.cam_calib * dist) + self.pose[1] + self.cam_y_offset
+
+        return (x, y)
+
+    # convert image pixel to Baxter point
+    def pixel_to_baxter_close(self, px, dist):
+        x = ((px[1] - (self.height / 2)) * self.cam_calib * dist) + self.pose[0] + self.cam_x_offset
+        y = ((px[0] - (self.width / 2)) * self.cam_calib * dist) + self.pose[1] - .033
 
         return (x, y)
 
@@ -1039,17 +1045,6 @@ class Locate():
     # find places for golf balls
     def find_places(self, c):
         # find long side of ball tray
-        # this was commented out because you are using a square
-        #l1_sq = ((c[1][0] - c[0][0]) * (c[1][0] - c[0][0])) +           \
-                #((c[1][1] - c[0][1]) * (c[1][1] - c[0][1]))
-        #l2_sq = ((c[2][0] - c[1][0]) * (c[2][0] - c[1][0])) +           \
-                #((c[2][1] - c[1][1]) * (c[2][1] - c[1][1]))
-
-        #if l1_sq > l2_sq:                     # c[0] to c[1] is a long side
-            #cc = [c[0], c[1], c[2], c[3]]
-        #else:                                 # c[1] to c[2] is a long side
-            #cc = [c[1], c[2], c[3], c[0]][0]
-
         cc = [c[0], c[1], c[2], c[3]]
         
         # ball tray corners in baxter coordinates
@@ -1061,8 +1056,8 @@ class Locate():
         ref_y = cc[0][1]
         dl_x  = (cc[1][0] - cc[0][0]) / 8
         dl_y  = (cc[1][1] - cc[0][1]) / 8
-        ds_x  = (cc[2][0] - cc[1][0]) / 8  # was 6
-        ds_y  = (cc[2][1] - cc[1][1]) / 8  # was 6
+        ds_x  = (cc[2][0] - cc[1][0]) / 8 
+        ds_y  = (cc[2][1] - cc[1][1]) / 8 
         #please see the diagram with the map of the functions location and how
         # they corrolate to the colors.  The order below is different than that of
         # the original. 
@@ -1070,7 +1065,7 @@ class Locate():
 	tempcount = 0
 	for i in range(8):
 		for j in range(8):
-			p[tempcount] = (ref_x + (((8-i)+.5) * dl_x) + ((j+.5) * ds_x), ref_y + ((8-i-.5) * dl_y) + ((j-1-.5) * ds_y))
+			p[tempcount] = (ref_x + ((8-i+.7) * dl_x) + ((j+.7) * ds_x), ref_y + ((8-i-.4) * dl_y) + ((j-1-.4) * ds_y))
 			tempcount = tempcount + 1
 		
         for i in range(64):
@@ -1237,9 +1232,9 @@ class Locate():
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         blurred = cv2.GaussianBlur(gray, (5,5),0)
         thresh = cv2.threshold(blurred,40, 255, cv2.THRESH_BINARY)[1]
-        cv2.imshow("Threshold Picture", thresh)
+        #cv2.imshow("Threshold Picture", thresh)
         thresh = cv2.bitwise_not(thresh)
-        cv2.imshow("Threshold Inverted", thresh)
+        #cv2.imshow("Threshold Inverted", thresh)
 
         #find contours in the threshold image
         cnts = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL,
@@ -1249,57 +1244,59 @@ class Locate():
         circle_centers = []
         closest_point = (0,0)
         distance = 10000.00
+        length = len(cnts)
+        print("The length of cnts is: ", length)
+        print("\n" * 2)
         # loop over the contours
-        for c in cnts[0:3]:
+        for c in cnts[0:6]:
 	    # compute the center of the contour
             point = (0,0)
 	    M = cv2.moments(c)
 
-	    print("The moments")
-	    print(M)
-	    
-	    cX = int(M["m10"] / M["m00"])
-	    cY = int(M["m01"] / M["m00"])
-            #shape = self.sd.detect(c)
-            #print("Here is the value of shape: ", shape)
-            center = str(cX) + ", " + str(cY)
-            point = cX, cY
-            print("Here is the value of point: ", point)
-            #convert to baxter coordinates.    
-            ball = self.pixel_to_baxter(point, self.distance - .05)
-            #find distance between center where contour found and desired pose.
-	    print("Before Distance calculation") 
-            distance_new = ((ball[0] - pose[0]) * (ball[0] - pose[0])) + ((ball[1] - pose[1]) * (ball[1] - pose[1]))
-	    print("After Distance Calculation")
-            if distance_new < distance:
-                distance = distance_new
-                closest_point = ball[0], ball[1]
-            center = str(ball[0]) + ", " + str(ball[1])
-            print("Here is the value of ball after change to pixel_to_baxter: ", ball)
-            circle_centers.append(ball)
-            print("Here is the value of circle_centers in the for-loop: ", circle_centers)
-            print('\n' * 2)
-	    # draw the contour and center of the shape on the image
-	    cv2.drawContours(image, [c], -1, (0, 255, 0), 2)
-	    cv2.circle(image, (cX, cY), 7, (255, 255, 255), -1)
-	    cv2.putText(image, center, (cX - 20, cY - 20),
+	    #print("The moments")
+	    #print(M)
+	    if M["m00"] == 0:
+                print("****************")
+                print("M[m00] equaled 0")
+                print("*****************")
+            else:    
+	        cX = int(M["m10"] / M["m00"])
+	        cY = int(M["m01"] / M["m00"])
+                #shape = self.sd.detect(c)
+                #print("Here is the value of shape: ", shape)
+                center = str(cX) + ", " + str(cY)
+                point = cX, cY
+                print("Here is the value of point: ", point)
+                #convert to baxter coordinates.    
+                ball = self.pixel_to_baxter_close(point, .153)
+                #find distance between center where contour found and desired pose.
+	        print("Before Distance calculation") 
+                distance_new = ((ball[0] - pose[0]) * (ball[0] - pose[0])) + ((ball[1] - pose[1]) * (ball[1] - pose[1]))
+	        print("After Distance Calculation")
+                if distance_new < distance:
+                    distance = distance_new
+                    closest_point = ball[0], ball[1]
+                center = str(ball[0]) + ", " + str(ball[1])
+                print("Here is the value of ball after change to pixel_to_baxter: ", ball)
+                circle_centers.append(ball)
+                print("Here is the value of circle_centers in the for-loop: ", circle_centers)
+                print('\n' * 2)
+	        # draw the contour and center of the shape on the image
+	        cv2.drawContours(image, [c], -1, (0, 255, 0), 2)
+	        cv2.circle(image, (cX, cY), 7, (255, 255, 255), -1)
+	        cv2.putText(image, center, (cX - 20, cY - 20),
 		cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
  
-	    # show the image
-	    cv2.imshow("Image", image)
-	    cv2.waitKey(0)
+	        # show the image
+	        cv2.imshow("Image", image)
+	        cv2.waitKey(0)
         print("Here is the value of the closest point outside the for-loop: ", closest_point)
         #calculate the offsets from where you want to go to where the actual contour is located. 
-        """
-        x_offset = closest_point[0] - pose[0]
-        y_offset = closest_point[1] - pose[1]
-        if abs(x_offset) > 0.01:
-            pose1[0] = pose[0] + x_offset
-        if abs(y_offset) > 0.01:
-            pose1[1] = pose[1] + y_offset
-        """
+        
+        
 	pose1[0] = closest_point[0]
-	pose1[1] = closest_point[1] - .12
+	pose1[1] = closest_point[1]
+
         print("The updated version of pose1: ", pose1)
         return pose1
 
@@ -1540,36 +1537,46 @@ if __name__ == "__main__":
     board_spot = list() 
     raw_input("Press Enter to start: ")
     for i in range (64):
+
+	"""
 	if i%8 <= 3:
 		if i >= 32:
-			locator.pose = [copy.copy(locator.ball_tray_place[i][0]) -.025, #-.015
-                    		copy.copy(locator.ball_tray_place[i][1])-.075, #-.045
-                    		locator.golf_ball_z - .30,
+			locator.pose = [copy.copy(locator.ball_tray_place[i][0]) -.025, #-.025
+                    		copy.copy(locator.ball_tray_place[i][1])-.075, #-.075
+                    		locator.golf_ball_z - .32,
                     		locator.roll,
                     		locator.pitch,
                     		locator.yaw]
 		else:
-			locator.pose = [copy.copy(locator.ball_tray_place[i][0]) -.035, #-.015
-                    		copy.copy(locator.ball_tray_place[i][1])-.075, #-.045
-                    		locator.golf_ball_z - .30,
+			locator.pose = [copy.copy(locator.ball_tray_place[i][0]) -.035, #-.035
+                    		copy.copy(locator.ball_tray_place[i][1])-.075, #-.075
+                    		locator.golf_ball_z - .32,
                     		locator.roll,
                     		locator.pitch,
                     		locator.yaw]
 	else:
 		if i >= 32:
-			locator.pose = [copy.copy(locator.ball_tray_place[i][0]) -.025, #-.015
+			locator.pose = [copy.copy(locator.ball_tray_place[i][0]) -.025, #-.025
                     		copy.copy(locator.ball_tray_place[i][1])-.045, #-.045
-                    		locator.golf_ball_z - .30,
+                    		locator.golf_ball_z - .32,
                     		locator.roll,
                     		locator.pitch,
                     		locator.yaw]
 		else:	
-        		locator.pose = [copy.copy(locator.ball_tray_place[i][0]) -.025, #-.015
-                    		copy.copy(locator.ball_tray_place[i][1])-.055, #-.045
-                    		locator.golf_ball_z - .30,
+        		locator.pose = [copy.copy(locator.ball_tray_place[i][0]) -.025, #-.025
+                    		copy.copy(locator.ball_tray_place[i][1])-.055, #-.055
+                    		locator.golf_ball_z - .32,
                     		locator.roll,
                     		locator.pitch,
                     		locator.yaw]
+	"""
+	locator.pose = [copy.copy(locator.ball_tray_place[i][0]), #-.015
+        	copy.copy(locator.ball_tray_place[i][1]), #-.045
+        	locator.golf_ball_z - .32,
+        	locator.roll,
+                locator.pitch,
+                locator.yaw]
+	
         board_spot.append(locator.pose)
     
     #locator.baxter_ik_move(locator.limb, locator.pose)
@@ -1578,17 +1585,19 @@ if __name__ == "__main__":
     #number can be 0 to 64 where 0 is top left on picture, 63 is bottom right
     while True:
         pos1 = input("Where to pick from (between 0 and 63)")
-        while pos1>63 or pos1<0:
+        while pos1>63 or pos1<0 or pos1 == "":
 	    pos1 = input("Where to pick from (between 0 and 63)")
         pos2 = input("Where to place (between 0 and 63)")
-        while pos2>63 or pos2<0:
+        while pos2>63 or pos2<0 or pos1 == "":
 	    pos2 = input("Where to place (between 0 and 63)")	
         print("\nPicking...")
         locator.pick(board_spot[pos1])
 	print("middle ground...")
-	locator.middle(board_spot[28])
+	locator.middle(board_spot[27])
         print("\nPlacing...")
-        locator.place(board_spot[pos2])
+	updatedpose = copy.copy(board_spot[pos2])
+	updatedpose[2] = board_spot[pos2][2] + .02
+        locator.place(updatedpose)
     
 
     print("All done")
