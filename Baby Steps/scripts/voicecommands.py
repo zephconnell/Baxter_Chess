@@ -18,6 +18,13 @@ game.initial_board.initialize_board()
 game.create_piece_dict()
 game.print_board()
 
+#import and initialization for board and piece recognition and movement
+from chess_real2 import Locate
+import string
+import copy
+import os
+image_directory = os.getenv("HOME") + "/Golf/"
+
 #import class for clean shutdown
 from neutral import Reset
 
@@ -257,7 +264,7 @@ class Voice:
             self.piecetomove = 'none'
             self.destination = 'nowhere'
             self.movementdefined = False
-            print("Reset confirmed. Name the piece you would like to move or a functional operation.")
+            print("Reset confirmed. Say the piece you would like to move, or say a functional operation.")
         else:
             print("No valid command")
             return
@@ -272,27 +279,131 @@ class Voice:
         if self.movementdefined:
             self.message = self.piecetomove + ' ' + self.destination
 		
+# read the setup parameters from setup.dat
+#This is the first function to look at.It is entirely
+# optional.  The limb and distance can be "hard coded" or 
+#you can even get user input if desired. 
+def get_setup():
+    global image_directory
+    file_name = image_directory + "setup.dat"
+
+    try:
+        f = open(file_name, "r")
+    except ValueError:
+        sys.exit("ERROR: golf_setup must be run before golf")
+
+    # find limb
+    s = string.split(f.readline())
+    if len(s) >= 3:
+        if s[2] == "left" or s[2] == "right":
+            limb = s[2]
+        else:
+            sys.exit("ERROR: invalid limb in %s" % file_name)
+    else:
+        sys.exit("ERROR: missing limb in %s" % file_name)
+
+    # find distance to table
+    s = string.split(f.readline())
+    if len(s) >= 3:
+        try:
+            distance = float(s[2])
+        except ValueError:
+            sys.exit("ERROR: invalid distance in %s" % file_name)
+    else:
+        sys.exit("ERROR: missing distance in %s" % file_name)
+
+    return limb, distance
+
+#convert chess board indices (a-h,1-8) into baxter board coordinates (0-63)
+def index_to_coordinate(index):
+    loc = game.label_to_loc(index)
+    coordinate = 8*(7-loc[1]) + loc[0]
+    #print("Coordinate: " + coordinate + ", loc[1]: " + loc[1] + ", loc[0]: " + loc[0])
+    return coordinate
 
 if __name__=="__main__":
 
     try:
         rospy.init_node('voicecommands', anonymous = True)
+
+        # get setup parameters---go to function with #2 by it
+        limb, distance = get_setup()
+        print "limb     = ", limb
+        print "distance = ", distance
+        # create an instance of the class Locate. 
+        locator = Locate(limb, distance)
+        rospy.on_shutdown(locator.clean_shutdown) 
+        raw_input("Press Enter to start initialization: ")
+      
+        locator.gripper.open()
+    
+
+        # move the arm whose camera you are using close to the board
+        # you may wish to change this starting location. 
+        locator.pose = [locator.ball_tray_x,
+                        locator.ball_tray_y,
+                        locator.ball_tray_z,
+                        locator.roll, locator.pitch, locator.yaw]
+        locator.baxter_ik_move(locator.limb, locator.pose)
+
+        # find the chess board
+        locator.find_ball_tray()
+
+        # create a list of poses in Baxter's coordinates for each chess board square
+        board_spot = list() 
+        raw_input("Press Enter to begin voice command operation: ")
+        for i in range (64):
+            locator.pose = [copy.copy(locator.ball_tray_place[i][0]), #-.015
+        	copy.copy(locator.ball_tray_place[i][1]), #-.045
+        	locator.golf_ball_z - .32,
+        	locator.roll,
+                locator.pitch,
+                locator.yaw]
+    
+            board_spot.append(locator.pose)
+    
+        #locator.baxter_ik_move(locator.limb, locator.pose)
+
         voice = Voice()
-        print("Going to start the while loop\n")
         print("Name the piece you would like to move or a functional operation.")
         
         while not rospy.is_shutdown():
             if voice.movementdefined:
+                #publish the desired move to the voice topic and print to the terminal for reference
                 voice.pub.publish(voice.message)
-                #game.move_piece("P1","a3",False)
-                validmove = game.move_piece(voice.piecetomove,voice.destination,voice.whiteturn)
                 print("Move " + voice.piecetomove + " to postion " + voice.destination)
+
+                #get index of the piece the player wants to move
+                if(voice.whiteturn):
+                    pieceindex = game.white_piece_dict[voice.piecetomove]
+                else:
+                    pieceindex = game.black_piece_dict[voice.piecetomove]
+
+                #get the coordinates of the starting and ending positions for the desired move
+                pos1 = 8*(7-pieceindex[1]) + pieceindex[0]
+                loc = game.label_to_loc(voice.destination)
+                pos2 = 8*(7-loc[1]) + loc[0]
+
+                #check if the move is valid using the virtual board
+                validmove = game.check_move(voice.piecetomove,loc,voice.whiteturn)
+
+                #request baxter to perform the physical movement
+                if validmove:	
+                    print("\nPicking...")
+                    locator.pick(board_spot[pos1])
+                    print("middle ground...")
+                    locator.middle(board_spot[28])
+                    print("\nPlacing...")
+                    updatedpose = copy.copy(board_spot[pos2])
+	            updatedpose[2] = board_spot[pos2][2] + .02
+                    locator.place(updatedpose)
+                if(True): # this should be a check to see if Baxter actually moved the piece
+                    validmove = game.move_piece(voice.piecetomove,voice.destination,voice.whiteturn) # update virtual board state
+                    voice.whiteturn = not voice.whiteturn # change turn between white and black
+                game.print_board()
                 voice.piecetomove = 'none'
                 voice.destination = 'nowhere'
                 voice.movementdefined = False
-                if validmove:
-                    voice.whiteturn = not voice.whiteturn
-                game.print_board()
                 print("Give a piece and a location to move it.")
             voice.r.sleep()
             

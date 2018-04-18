@@ -1248,7 +1248,7 @@ class Locate():
         print("The length of cnts is: ", length)
         print("\n" * 2)
         # loop over the contours
-        for c in cnts[0:6]:
+        for c in cnts: #[0:6]:
 	    # compute the center of the contour
             point = (0,0)
 	    M = cv2.moments(c)

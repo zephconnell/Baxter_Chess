@@ -1,0 +1,129 @@
+Language model created by QuickLM on Tue Apr 10 20:05:18 EDT 2018
+Copyright (c) 1996-2010 Carnegie Mellon University and Alexander I. Rudnicky
+
+The model is in standard ARPA format, designed by Doug Paul while he was at MITRE.
+
+The code that was used to produce this language model is available in Open Source.
+Please visit http://www.speech.cs.cmu.edu/tools/ for more information
+
+The (fixed) discount mass is 0.5. The backoffs are computed using the ratio method.
+This model based on a corpus of 26 sentences and 28 words
+
+\data\
+ngram 1=28
+ngram 2=52
+ngram 3=26
+
+\1-grams:
+-0.7782 </s> -0.3010
+-0.7782 <s> -0.2218
+-2.1931 ALPHA -0.2218
+-2.1931 BISHOP -0.2218
+-2.1931 BRAVO -0.2218
+-2.1931 CHARLIE -0.2218
+-2.1931 CONTINUE -0.2218
+-2.1931 DELTA -0.2218
+-2.1931 ECHO -0.2218
+-2.1931 EIGHT -0.2218
+-2.1931 FIVE -0.2218
+-2.1931 FOUR -0.2218
+-2.1931 FOXTROT -0.2218
+-2.1931 GOLF -0.2218
+-2.1931 HOTEL -0.2218
+-2.1931 KING -0.2218
+-2.1931 KNIGHT -0.2218
+-2.1931 ONE -0.2218
+-2.1931 PAUSE -0.2218
+-2.1931 PAWN -0.2218
+-2.1931 QUEEN -0.2218
+-2.1931 RESET -0.2218
+-2.1931 ROOK -0.2218
+-2.1931 SEVEN -0.2218
+-2.1931 SHUTDOWN -0.2218
+-2.1931 SIX -0.2218
+-2.1931 THREE -0.2218
+-2.1931 TWO -0.2218
+
+\2-grams:
+-1.7160 <s> ALPHA 0.0000
+-1.7160 <s> BISHOP 0.0000
+-1.7160 <s> BRAVO 0.0000
+-1.7160 <s> CHARLIE 0.0000
+-1.7160 <s> CONTINUE 0.0000
+-1.7160 <s> DELTA 0.0000
+-1.7160 <s> ECHO 0.0000
+-1.7160 <s> EIGHT 0.0000
+-1.7160 <s> FIVE 0.0000
+-1.7160 <s> FOUR 0.0000
+-1.7160 <s> FOXTROT 0.0000
+-1.7160 <s> GOLF 0.0000
+-1.7160 <s> HOTEL 0.0000
+-1.7160 <s> KING 0.0000
+-1.7160 <s> KNIGHT 0.0000
+-1.7160 <s> ONE 0.0000
+-1.7160 <s> PAUSE 0.0000
+-1.7160 <s> PAWN 0.0000
+-1.7160 <s> QUEEN 0.0000
+-1.7160 <s> RESET 0.0000
+-1.7160 <s> ROOK 0.0000
+-1.7160 <s> SEVEN 0.0000
+-1.7160 <s> SHUTDOWN 0.0000
+-1.7160 <s> SIX 0.0000
+-1.7160 <s> THREE 0.0000
+-1.7160 <s> TWO 0.0000
+-0.3010 ALPHA </s> -0.3010
+-0.3010 BISHOP </s> -0.3010
+-0.3010 BRAVO </s> -0.3010
+-0.3010 CHARLIE </s> -0.3010
+-0.3010 CONTINUE </s> -0.3010
+-0.3010 DELTA </s> -0.3010
+-0.3010 ECHO </s> -0.3010
+-0.3010 EIGHT </s> -0.3010
+-0.3010 FIVE </s> -0.3010
+-0.3010 FOUR </s> -0.3010
+-0.3010 FOXTROT </s> -0.3010
+-0.3010 GOLF </s> -0.3010
+-0.3010 HOTEL </s> -0.3010
+-0.3010 KING </s> -0.3010
+-0.3010 KNIGHT </s> -0.3010
+-0.3010 ONE </s> -0.3010
+-0.3010 PAUSE </s> -0.3010
+-0.3010 PAWN </s> -0.3010
+-0.3010 QUEEN </s> -0.3010
+-0.3010 RESET </s> -0.3010
+-0.3010 ROOK </s> -0.3010
+-0.3010 SEVEN </s> -0.3010
+-0.3010 SHUTDOWN </s> -0.3010
+-0.3010 SIX </s> -0.3010
+-0.3010 THREE </s> -0.3010
+-0.3010 TWO </s> -0.3010
+
+\3-grams:
+-0.3010 <s> ALPHA </s>
+-0.3010 <s> BISHOP </s>
+-0.3010 <s> BRAVO </s>
+-0.3010 <s> CHARLIE </s>
+-0.3010 <s> CONTINUE </s>
+-0.3010 <s> DELTA </s>
+-0.3010 <s> ECHO </s>
+-0.3010 <s> EIGHT </s>
+-0.3010 <s> FIVE </s>
+-0.3010 <s> FOUR </s>
+-0.3010 <s> FOXTROT </s>
+-0.3010 <s> GOLF </s>
+-0.3010 <s> HOTEL </s>
+-0.3010 <s> KING </s>
+-0.3010 <s> KNIGHT </s>
+-0.3010 <s> ONE </s>
+-0.3010 <s> PAUSE </s>
+-0.3010 <s> PAWN </s>
+-0.3010 <s> QUEEN </s>
+-0.3010 <s> RESET </s>
+-0.3010 <s> ROOK </s>
+-0.3010 <s> SEVEN </s>
+-0.3010 <s> SHUTDOWN </s>
+-0.3010 <s> SIX </s>
+-0.3010 <s> THREE </s>
+-0.3010 <s> TWO </s>
+
+\end\
