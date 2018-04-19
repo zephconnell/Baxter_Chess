@@ -53,8 +53,13 @@ class Voice:
         # variable to determine whose turn it is
         self.whiteturn = True
 
-        #publishing the verbal command to the command topic
-        self.pub = rospy.Publisher('/command', String, queue_size=5)
+        # variables to determine if Baxter successfully executed a move if valid
+	self.checkedmove = False
+        self.waitingforcheck = False
+        self.movesuccess = False
+
+        # variable to determine if a chess piece movement has been successfully requested
+        self.movementdefined = False
         
         # Subscribe to the /recognizer/output topic to receive voice commands.
         rospy.Subscriber('/recognizer/output', String, self.speech_callback)      
@@ -86,14 +91,24 @@ class Voice:
             return       
         
         if command == 'shutdown':
-            print("Initializing node...")
-            #rospy.init_node("reset", anonymous = True)
             reset = Reset()
             reset.set_neutral()
             reset.reset_facescreen()
             reset.grippers_reset()
             reset.disable_motors()
             print("\nBaxter's arms now in neutral position, led display back to rethink log and motors have been disabled.")
+            return
+
+        # wait for an answer to whether Baxter successfully made a move or not before accepting any new movements
+        if self.movementdefined and not self.checkedmove:
+            if command == 'yes':
+                self.checkedmove = True
+                self.movesuccess = True
+            elif command == 'no':
+                self.checkedmove = True
+                self.movesuccess = False
+            else:
+                print("Must answer before requesting another move.\nDid Baxter successfully make the move most recently requested?\nReply 'Yes' or 'No'.")
             return
 
         piece = 'none'
@@ -276,8 +291,7 @@ class Voice:
             self.destination = index
             self.movementdefined = True
             print(self.destination + " has been chosen as the destination.")
-        if self.movementdefined:
-            self.message = self.piecetomove + ' ' + self.destination
+
 		
 # read the setup parameters from setup.dat
 #This is the first function to look at.It is entirely
@@ -313,13 +327,6 @@ def get_setup():
         sys.exit("ERROR: missing distance in %s" % file_name)
 
     return limb, distance
-
-#convert chess board indices (a-h,1-8) into baxter board coordinates (0-63)
-def index_to_coordinate(index):
-    loc = game.label_to_loc(index)
-    coordinate = 8*(7-loc[1]) + loc[0]
-    #print("Coordinate: " + coordinate + ", loc[1]: " + loc[1] + ", loc[0]: " + loc[0])
-    return coordinate
 
 if __name__=="__main__":
 
@@ -365,13 +372,13 @@ if __name__=="__main__":
         #locator.baxter_ik_move(locator.limb, locator.pose)
 
         voice = Voice()
-        print("Name the piece you would like to move or a functional operation.")
+        print("Say the piece you would like to move or a functional operation.")
         
         while not rospy.is_shutdown():
-            if voice.movementdefined:
-                #publish the desired move to the voice topic and print to the terminal for reference
-                voice.pub.publish(voice.message)
-                print("Move " + voice.piecetomove + " to postion " + voice.destination)
+            # if the user defined a possible move attempt to perform it once
+            if voice.movementdefined and not voice.checkedmove and not voice.waitingforcheck:
+                #print the desired move to the terminal for reference
+                print("Attempting to move " + voice.piecetomove + " to postion " + voice.destination)
 
                 #get index of the piece the player wants to move
                 if(voice.whiteturn):
@@ -388,7 +395,8 @@ if __name__=="__main__":
                 validmove = game.check_move(voice.piecetomove,loc,voice.whiteturn)
 
                 #request baxter to perform the physical movement
-                if validmove:	
+                if validmove:
+                    voice.paused = True
                     print("\nPicking...")
                     locator.pick(board_spot[pos1])
                     print("middle ground...")
@@ -397,17 +405,39 @@ if __name__=="__main__":
                     updatedpose = copy.copy(board_spot[pos2])
 	            updatedpose[2] = board_spot[pos2][2] + .02
                     locator.place(updatedpose)
-                if(True): # this should be a check to see if Baxter actually moved the piece
+                    voice.waitingforcheck = True
+                    print("Did Baxter successfully make the move requested? \nReply 'Yes' or 'No'.")
+                    voice.paused = False
+                else:
+                    print("Requested move was invalid.\nSay the piece you would like to move or a functional operation.")
+                    voice.movementdefined = False
+                    voice.piecetomove = 'none'
+                    voice.destination = 'nowhere'
+
+            # if baxter successfully executed the move
+            # update the virtual board state,
+            # change turns,
+            # and reset variables to be ready for next verbal command
+            if voice.movementdefined and voice.checkedmove:
+                if voice.movesuccess:
                     validmove = game.move_piece(voice.piecetomove,voice.destination,voice.whiteturn) # update virtual board state
                     voice.whiteturn = not voice.whiteturn # change turn between white and black
                 game.print_board()
                 voice.piecetomove = 'none'
                 voice.destination = 'nowhere'
                 voice.movementdefined = False
-                print("Give a piece and a location to move it.")
+                voice.waitingforcheck = False
+                voice.checkedmove = False
+                print("Say the piece you would like to move or a functional operation.")
             voice.r.sleep()
             
     except rospy.ROSInterruptException:
         rospy.loginfo("Voice command script terminated.")
+        reset = Reset()
+        reset.set_neutral()
+        reset.reset_facescreen()
+        reset.grippers_reset()
+        reset.disable_motors()
+        print("\nBaxter's arms now in neutral position, led display back to rethink log and motors have been disabled.")
 
 

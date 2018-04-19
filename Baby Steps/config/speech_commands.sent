@@ -24,3 +24,5 @@
 <s> CONTINUE </s>
 <s> SHUTDOWN </s>
 <s> RESET </s>
+<s> YES </s>
+<s> NO </s>

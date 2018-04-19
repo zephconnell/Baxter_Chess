@@ -24,3 +24,5 @@ pause
 continue
 shutdown
 reset
+yes
+no
