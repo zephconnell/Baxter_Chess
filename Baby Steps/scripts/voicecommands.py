@@ -304,7 +304,7 @@ def get_setup():
     try:
         f = open(file_name, "r")
     except ValueError:
-        sys.exit("ERROR: golf_setup must be run before golf")
+        sys.exit("ERROR: setup must be run before this")
 
     # find limb
     s = string.split(f.readline())
@@ -347,28 +347,28 @@ if __name__=="__main__":
 
         # move the arm whose camera you are using close to the board
         # you may wish to change this starting location. 
-        locator.pose = [locator.ball_tray_x,
-                        locator.ball_tray_y,
-                        locator.ball_tray_z,
+        locator.pose = [locator.cBoard_tray_x,
+                        locator.cBoard_tray_y,
+                        locator.cBoard_tray_z,
                         locator.roll, locator.pitch, locator.yaw]
         locator.baxter_ik_move(locator.limb, locator.pose)
 
         # find the chess board
-        locator.find_ball_tray()
+        locator.find_cBoard_tray()
 
         # create a list of poses in Baxter's coordinates for each chess board square
         board_spot = list() 
         raw_input("Press Enter to begin voice command operation: ")
-        for i in range (64):
-            locator.pose = [copy.copy(locator.ball_tray_place[i][0]), #-.015
-        	copy.copy(locator.ball_tray_place[i][1]), #-.045
-        	locator.golf_ball_z - .32,
+        for i in range (65):
+            locator.pose = [copy.copy(locator.cBoard_tray_place[i][0]), #-.015
+        	copy.copy(locator.cBoard_tray_place[i][1]), #-.045
+        	locator.piece_z - .32,
         	locator.roll,
                 locator.pitch,
                 locator.yaw]
     
             board_spot.append(locator.pose)
-    
+        
         #locator.baxter_ik_move(locator.limb, locator.pose)
 
         voice = Voice()
@@ -392,18 +392,24 @@ if __name__=="__main__":
                 pos2 = 8*(7-loc[1]) + loc[0]
 
                 #check if the move is valid using the virtual board
-                validmove = game.check_move(voice.piecetomove,loc,voice.whiteturn)
+                validmove = game.check_move(voice.piecetomove,loc,voice.whiteturn, piecekilled)
 
                 #request baxter to perform the physical movement
                 if validmove:
                     voice.paused = True
+                    if piecekilled == True:
+                        print("\nKilling")
+                        locator.pick(board_spot[pos2])
+                        locator.middle(board_spot[28])
+                        locator.place(board_spot[64])
+                        locator.middle(board_spot[28])
+                        
                     print("\nPicking...")
                     locator.pick(board_spot[pos1])
-                    print("middle ground...")
                     locator.middle(board_spot[28])
                     print("\nPlacing...")
                     updatedpose = copy.copy(board_spot[pos2])
-	            updatedpose[2] = board_spot[pos2][2] + .02
+                    updatedpose[2] = board_spot[pos2][2] + .02
                     locator.place(updatedpose)
                     voice.waitingforcheck = True
                     print("Did Baxter successfully make the move requested? \nReply 'Yes' or 'No'.")
