@@ -28,6 +28,9 @@ image_directory = os.getenv("HOME") + "/Golf/"
 #import class for clean shutdown
 from neutral import Reset
 
+#import class for text to speech
+from pyttsx_client import Talk
+
 class Voice:
     def __init__(self):
         
@@ -62,7 +65,10 @@ class Voice:
         self.movementdefined = False
         
         # Subscribe to the /recognizer/output topic to receive voice commands.
-        rospy.Subscriber('/recognizer/output', String, self.speech_callback)      
+        rospy.Subscriber('/recognizer/output', String, self.speech_callback)
+
+        # Object to be used for text to speech
+        self.talk = Talk()  
         
          
     def speech_callback(self, msg):
@@ -91,24 +97,25 @@ class Voice:
             return       
         
         if command == 'shutdown':
-            reset = Reset()
-            reset.set_neutral()
-            reset.reset_facescreen()
-            reset.grippers_reset()
-            reset.disable_motors()
+            #reset = Reset()
+            #reset.set_neutral()
+            #reset.reset_facescreen()
+            #reset.grippers_reset()
+            #reset.disable_motors()
+            rospy.signal_shutdown('Quit')
             print("\nBaxter's arms now in neutral position, led display back to rethink log and motors have been disabled.")
             return
 
         # wait for an answer to whether Baxter successfully made a move or not before accepting any new movements
         if self.movementdefined and not self.checkedmove:
-            if command == 'yes':
+            if command == 'success':
                 self.checkedmove = True
                 self.movesuccess = True
-            elif command == 'no':
+            elif command == 'failure':
                 self.checkedmove = True
                 self.movesuccess = False
             else:
-                print("Must answer before requesting another move.\nDid Baxter successfully make the move most recently requested?\nReply 'Yes' or 'No'.")
+                print("Must answer before requesting another move.\nDid Baxter successfully make the move most recently requested?\nReply 'Success' or 'Failure'.")
             return
 
         piece = 'none'
@@ -339,7 +346,9 @@ if __name__=="__main__":
         print "distance = ", distance
         # create an instance of the class Locate. 
         locator = Locate(limb, distance)
-        rospy.on_shutdown(locator.clean_shutdown) 
+        rospy.on_shutdown(locator.clean_shutdown)
+        voice = Voice()
+        voice.talk.start_init()
         raw_input("Press Enter to start initialization: ")
       
         locator.gripper.open()
@@ -357,22 +366,29 @@ if __name__=="__main__":
         locator.find_cBoard_tray()
 
         # create a list of poses in Baxter's coordinates for each chess board square
-        board_spot = list() 
+        board_spot = list()
+        voice.talk.begin_voice()
         raw_input("Press Enter to begin voice command operation: ")
         for i in range (65):
-            locator.pose = [copy.copy(locator.cBoard_tray_place[i][0]), #-.015
+	    if i == 64:
+		locator.pose = [copy.copy(locator.cBoard_tray_place[i][0]), #-.015
         	copy.copy(locator.cBoard_tray_place[i][1]), #-.045
-        	locator.piece_z - .32,
+        	locator.piece_z,
         	locator.roll,
                 locator.pitch,
                 locator.yaw]
-    
+	    else:
+                locator.pose = [copy.copy(locator.cBoard_tray_place[i][0]), #-.015
+        	    copy.copy(locator.cBoard_tray_place[i][1]), #-.045
+        	    locator.piece_z - .32,
+        	    locator.roll,
+                    locator.pitch,
+                    locator.yaw]
             board_spot.append(locator.pose)
-        
         #locator.baxter_ik_move(locator.limb, locator.pose)
 
-        voice = Voice()
-        print("Say the piece you would like to move or a functional operation.")
+        print("Say the piece you would like to move, or say a functional operation.")
+        voice.talk.say_piece()
         
         while not rospy.is_shutdown():
             # if the user defined a possible move attempt to perform it once
@@ -392,7 +408,7 @@ if __name__=="__main__":
                 pos2 = 8*(7-loc[1]) + loc[0]
 
                 #check if the move is valid using the virtual board
-                validmove = game.check_move(voice.piecetomove,loc,voice.whiteturn, piecekilled)
+                validmove, piecekilled = game.check_move(voice.piecetomove,loc,voice.whiteturn)
 
                 #request baxter to perform the physical movement
                 if validmove:
@@ -409,10 +425,10 @@ if __name__=="__main__":
                     locator.middle(board_spot[28])
                     print("\nPlacing...")
                     updatedpose = copy.copy(board_spot[pos2])
-                    updatedpose[2] = board_spot[pos2][2] + .02
+                    updatedpose[2] = board_spot[pos2][2] + .01
                     locator.place(updatedpose)
                     voice.waitingforcheck = True
-                    print("Did Baxter successfully make the move requested? \nReply 'Yes' or 'No'.")
+                    print("Did Baxter successfully make the move requested? \nReply 'Success' or 'Failure'.")
                     voice.paused = False
                 else:
                     print("Requested move was invalid.\nSay the piece you would like to move or a functional operation.")
@@ -445,5 +461,6 @@ if __name__=="__main__":
         reset.grippers_reset()
         reset.disable_motors()
         print("\nBaxter's arms now in neutral position, led display back to rethink log and motors have been disabled.")
+
 
 

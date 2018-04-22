@@ -68,17 +68,17 @@ find_package(catkin REQUIRED COMPONENTS
 # )
 
 ## Generate actions in the 'action' folder
-# add_action_files(
-#   FILES
-#   Action1.action
-#   Action2.action
-# )
+add_action_files(
+   FILES
+   Timer.action
+   Talk.action
+)
 
 ## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-#   baxter_core_msgs#   control_msgs#   sensor_msgs#   trajectory_msgs
-# )
+generate_messages(
+   DEPENDENCIES
+   actionlib_msgs baxter_core_msgs#   control_msgs#   sensor_msgs#   trajectory_msgs
+)
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -112,7 +112,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES baby_steps
-#  CATKIN_DEPENDS actionlib baxter_core_msgs baxter_interface control_msgs cv_bridge dynamic_reconfigure rospy sensor_msgs trajectory_msgs xacro
+  CATKIN_DEPENDS actionlib baxter_core_msgs baxter_interface control_msgs cv_bridge dynamic_reconfigure rospy sensor_msgs trajectory_msgs xacro
 #  DEPENDS system_lib
 )
 

@@ -1,4 +1,4 @@
-Language model created by QuickLM on Wed Apr 18 17:33:48 EDT 2018
+Language model created by QuickLM on Thu Apr 19 17:51:57 EDT 2018
 Copyright (c) 1996-2010 Carnegie Mellon University and Alexander I. Rudnicky
 
 The model is in standard ARPA format, designed by Doug Paul while he was at MITRE.
@@ -25,6 +25,7 @@ ngram 3=28
 -2.2253 DELTA -0.2218
 -2.2253 ECHO -0.2218
 -2.2253 EIGHT -0.2218
+-2.2253 FAILURE -0.2218
 -2.2253 FIVE -0.2218
 -2.2253 FOUR -0.2218
 -2.2253 FOXTROT -0.2218
@@ -32,7 +33,6 @@ ngram 3=28
 -2.2253 HOTEL -0.2218
 -2.2253 KING -0.2218
 -2.2253 KNIGHT -0.2218
--2.2253 NO -0.2218
 -2.2253 ONE -0.2218
 -2.2253 PAUSE -0.2218
 -2.2253 PAWN -0.2218
@@ -42,9 +42,9 @@ ngram 3=28
 -2.2253 SEVEN -0.2218
 -2.2253 SHUTDOWN -0.2218
 -2.2253 SIX -0.2218
+-2.2253 SUCCESS -0.2218
 -2.2253 THREE -0.2218
 -2.2253 TWO -0.2218
--2.2253 YES -0.2218
 
 \2-grams:
 -1.7482 <s> ALPHA 0.0000
@@ -55,6 +55,7 @@ ngram 3=28
 -1.7482 <s> DELTA 0.0000
 -1.7482 <s> ECHO 0.0000
 -1.7482 <s> EIGHT 0.0000
+-1.7482 <s> FAILURE 0.0000
 -1.7482 <s> FIVE 0.0000
 -1.7482 <s> FOUR 0.0000
 -1.7482 <s> FOXTROT 0.0000
@@ -62,7 +63,6 @@ ngram 3=28
 -1.7482 <s> HOTEL 0.0000
 -1.7482 <s> KING 0.0000
 -1.7482 <s> KNIGHT 0.0000
--1.7482 <s> NO 0.0000
 -1.7482 <s> ONE 0.0000
 -1.7482 <s> PAUSE 0.0000
 -1.7482 <s> PAWN 0.0000
@@ -72,9 +72,9 @@ ngram 3=28
 -1.7482 <s> SEVEN 0.0000
 -1.7482 <s> SHUTDOWN 0.0000
 -1.7482 <s> SIX 0.0000
+-1.7482 <s> SUCCESS 0.0000
 -1.7482 <s> THREE 0.0000
 -1.7482 <s> TWO 0.0000
--1.7482 <s> YES 0.0000
 -0.3010 ALPHA </s> -0.3010
 -0.3010 BISHOP </s> -0.3010
 -0.3010 BRAVO </s> -0.3010
@@ -83,6 +83,7 @@ ngram 3=28
 -0.3010 DELTA </s> -0.3010
 -0.3010 ECHO </s> -0.3010
 -0.3010 EIGHT </s> -0.3010
+-0.3010 FAILURE </s> -0.3010
 -0.3010 FIVE </s> -0.3010
 -0.3010 FOUR </s> -0.3010
 -0.3010 FOXTROT </s> -0.3010
@@ -90,7 +91,6 @@ ngram 3=28
 -0.3010 HOTEL </s> -0.3010
 -0.3010 KING </s> -0.3010
 -0.3010 KNIGHT </s> -0.3010
--0.3010 NO </s> -0.3010
 -0.3010 ONE </s> -0.3010
 -0.3010 PAUSE </s> -0.3010
 -0.3010 PAWN </s> -0.3010
@@ -100,9 +100,9 @@ ngram 3=28
 -0.3010 SEVEN </s> -0.3010
 -0.3010 SHUTDOWN </s> -0.3010
 -0.3010 SIX </s> -0.3010
+-0.3010 SUCCESS </s> -0.3010
 -0.3010 THREE </s> -0.3010
 -0.3010 TWO </s> -0.3010
--0.3010 YES </s> -0.3010
 
 \3-grams:
 -0.3010 <s> ALPHA </s>
@@ -113,6 +113,7 @@ ngram 3=28
 -0.3010 <s> DELTA </s>
 -0.3010 <s> ECHO </s>
 -0.3010 <s> EIGHT </s>
+-0.3010 <s> FAILURE </s>
 -0.3010 <s> FIVE </s>
 -0.3010 <s> FOUR </s>
 -0.3010 <s> FOXTROT </s>
@@ -120,7 +121,6 @@ ngram 3=28
 -0.3010 <s> HOTEL </s>
 -0.3010 <s> KING </s>
 -0.3010 <s> KNIGHT </s>
--0.3010 <s> NO </s>
 -0.3010 <s> ONE </s>
 -0.3010 <s> PAUSE </s>
 -0.3010 <s> PAWN </s>
@@ -130,8 +130,8 @@ ngram 3=28
 -0.3010 <s> SEVEN </s>
 -0.3010 <s> SHUTDOWN </s>
 -0.3010 <s> SIX </s>
+-0.3010 <s> SUCCESS </s>
 -0.3010 <s> THREE </s>
 -0.3010 <s> TWO </s>
--0.3010 <s> YES </s>
 
 \end\

@@ -220,8 +220,9 @@ class Locate():
 
         # camera parameters (NB. other parameters in open_camera)****the description for how this was calculated is on the website
         self.cam_calib    = 0.0025                   # meters per pixel at 1 meter .0025
-        self.cam_x_offset = 0.042                      # camera gripper offset
-        self.cam_y_offset = -0.081			#-.01 or -.015
+        self.cam_x_offset = 0.040                      # camera gripper offset
+        self.cam_y_offset = -0.084			#-.01 or -.015
+	self.cam_y_offset_close = -.031
         self.width        = 960 #640                       # Camera resolution
         self.height       = 600 #400
 
@@ -458,7 +459,7 @@ class Locate():
     # convert image pixel to Baxter point
     def pixel_to_baxter_close(self, px, dist):
         x = ((px[1] - (self.height / 2)) * self.cam_calib * dist) + self.pose[0] + self.cam_x_offset
-        y = ((px[0] - (self.width / 2)) * self.cam_calib * dist) + self.pose[1] - .033
+        y = ((px[0] - (self.width / 2)) * self.cam_calib * dist) + self.pose[1] + self.cam_y_offset_close
 
         return (x, y)
 
@@ -861,10 +862,10 @@ class Locate():
         tempcount = 0
         for i in range(8):
             for j in range(8):
-                p[tempcount] = (ref_x + ((8-i+.5) * dl_x) + ((j+.5) * ds_x), ref_y + ((8-i-.5) * dl_y) + ((j-1-.5) * ds_y))
+                p[tempcount] = (ref_x + ((8-i+.7) * dl_x) + ((j+.7) * ds_x), ref_y + ((8-i-.4) * dl_y) + ((j-1-.4) * ds_y))
                 tempcount = tempcount + 1
 		
-        p[64] = (2*ref_x , 2*ref_y)
+        p[64] = (p[31][0]+100, p[31][1])
         for i in range(65):
             # mark position of cBoard tray places ---different colors were used so you could correlate what the calculations
             #   above are doing. 
@@ -1023,8 +1024,8 @@ class Locate():
         file_name = self.image_dir + "circles" + ".jpg"
         cv.SaveImage(file_name, cv.fromarray(self.cv_image))
         image = cv2.imread(file_name)
-        cv2.imshow("Test Circle", image)
-        cv2.waitKey(0)
+        #cv2.imshow("Test Circle", image)
+        #cv2.waitKey(0)
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         blurred = cv2.GaussianBlur(gray, (5,5),0)
         thresh = cv2.threshold(blurred,40, 255, cv2.THRESH_BINARY)[1]
@@ -1078,14 +1079,14 @@ class Locate():
                 print("Here is the value of circle_centers in the for-loop: ", circle_centers)
                 print('\n' * 2)
 	        # draw the contour and center of the shape on the image
-	        cv2.drawContours(image, [c], -1, (0, 255, 0), 2)
-	        cv2.circle(image, (cX, cY), 7, (255, 255, 255), -1)
-	        cv2.putText(image, center, (cX - 20, cY - 20),
-		cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
+	        #cv2.drawContours(image, [c], -1, (0, 255, 0), 2)
+	        #cv2.circle(image, (cX, cY), 7, (255, 255, 255), -1)
+	        #cv2.putText(image, center, (cX - 20, cY - 20),
+		#cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
  
 	        # show the image
-	        cv2.imshow("Image", image)
-	        cv2.waitKey(0)
+	        #cv2.imshow("Image", image)
+	        #cv2.waitKey(0)
         print("Here is the value of the closest point outside the for-loop: ", closest_point)
         #calculate the offsets from where you want to go to where the actual contour is located. 
         
@@ -1320,5 +1321,6 @@ if __name__ == "__main__":
     print("All done")
     #program starts the shut down process here
     
+
 
 

@@ -985,16 +985,24 @@ class Game():
         newj = 0
         current_init_loc = True
         loc = self.label_to_loc(loc_label)
-        if(white_turn):
-            current_loc = self.white_piece_dict[label]
-        else:
-            current_loc = self.black_piece_dict[label]
-            
+     	if(self.check_piece_dict(label,white_turn)):
+	    if(white_turn):
+                current_loc = self.white_piece_dict[label]
+	    else:
+                current_loc = self.black_piece_dict[label]
+	else:
+	    print("Invalid Move")
+            return False	    
         i,j = self.initial_board.xy_to_ij(current_loc[0],current_loc[1])
         newi,newj = self.initial_board.xy_to_ij(loc[0],loc[1])
         piece_type = self.initial_board.board[i][j].return_piece().identity()
         check,isKilled = self.check_move(label,loc,white_turn)
+	victim_label = self.initial_board.board[newi][newj].return_piece().return_labelp()
 	print(isKilled)
+	
+        if isKilled:
+            self.remove_from_dict(victim_label,white_turn)
+	
         if(check):
             if( piece_type == "Pawn"):
                 self.initial_board.board[i][j].return_piece().set_init_loc(False)

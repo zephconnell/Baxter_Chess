@@ -10,7 +10,7 @@ class Game():
         self.piece_dict = {}
         self.white_piece_dict = {}
         self.black_piece_dict = {}
-        
+        self.killed_piece = False
         
     def label_to_loc(self,label):
        loc = []
@@ -944,20 +944,40 @@ class Game():
         self.initial_board.board[i][j].return_piece().set_locp(loc[0],loc[1])
         self.initial_board.board[i][j].return_piece().set_color_string(colorp)
         self.initial_board.board[i][j].return_piece().set_labelp("PT")
+    def remove_from_dict(self,label,white_turn):
+	if(white_turn):
+		del self.black_piece_dict[label]
+	else:
+		del self.white_piece_dict[label]
 
     def check_move(self,label,loc,white_turn):
+	self.killed_piece = False
         if(self.check_piece_dict(label,white_turn)):
             if(white_turn):
                 current_loc = self.white_piece_dict[label]
             else:
                 current_loc = self.black_piece_dict[label]
-                
+            i,j,newi,newj = 0,0,0,0 
+	    i,j = self.initial_board.xy_to_ij(current_loc[0],current_loc[1])
+	    newi,newj = self.initial_board.xy_to_ij(loc[0],loc[1])
+	    piece_color = self.initial_board.board[i][j].return_piece().return_color_string()
+	    enemy_color = self.initial_board.board[newi][newj].return_piece().return_color_string() 
             for move in self.generate_moves(current_loc,white_turn):
                 if(move == loc):
-                    return True
-            return False
+                    if(enemy_color == "None"):  
+                    	self.killed_piece = False
+			
+		    else:
+			if(piece_color == enemy_color):
+			    self.killed_piece = False
+		
+			else:
+			    self.killed_piece = True
+			    
+		    return True,self.killed_piece
+            return False,self.killed_piece
         else:
-            return False
+            return False,self.killed_piece
     def move_piece(self,label,loc_label,white_turn):
         i = 0
         j = 0
@@ -965,16 +985,23 @@ class Game():
         newj = 0
         current_init_loc = True
         loc = self.label_to_loc(loc_label)
-        if(white_turn):
-            current_loc = self.white_piece_dict[label]
-        else:
-            current_loc = self.black_piece_dict[label]
-            
+     	if(self.check_piece_dict(label,white_turn)):
+	    if(white_turn):
+                current_loc = self.white_piece_dict[label]
+	    else:
+                current_loc = self.black_piece_dict[label]
+		    
         i,j = self.initial_board.xy_to_ij(current_loc[0],current_loc[1])
         newi,newj = self.initial_board.xy_to_ij(loc[0],loc[1])
         piece_type = self.initial_board.board[i][j].return_piece().identity()
-        
-        if(self.check_move(label,loc,white_turn)):
+        check,isKilled = self.check_move(label,loc,white_turn)
+	victim_label = self.initial_board.board[newi][newj].return_piece().return_labelp()
+	print(isKilled)
+	
+        if isKilled:
+            self.remove_from_dict(victim_label,white_turn)
+	
+        if(check):
             if( piece_type == "Pawn"):
                 self.initial_board.board[i][j].return_piece().set_init_loc(False)
                 current_init_loc = self.initial_board.board[i][j].return_piece().init_loc
@@ -982,6 +1009,7 @@ class Game():
                     
             current_piece = self.initial_board.board[i][j].return_piece()
             current_piece_color = self.initial_board.board[i][j].return_piece().return_colorp()
+	    current_color_string = self.initial_board.board[i][j].return_piece().return_color_string()
             current_labelp = self.initial_board.board[i][j].return_piece().return_labelp()
 
 
@@ -997,7 +1025,7 @@ class Game():
             self.initial_board.board[newi][newj].return_piece().set_colorp(current_piece_color)
             self.initial_board.board[newi][newj].return_piece().set_labelp(current_labelp)
             self.initial_board.board[newi][newj].return_piece().set_locp(loc[0],loc[1])
-            
+            self.initial_board.board[newi][newj].return_piece().set_color_string(current_color_string)
             if (piece_type == "Pawn"):
                 self.initial_board.board[newi][newj].return_piece().set_init_loc(current_init_loc)
 
@@ -1005,5 +1033,7 @@ class Game():
                 self.white_piece_dict[label] = loc
             else:
                 self.black_piece_dict[label] = loc
+            return True
         else:
             print("Invalid Move")
+            return False

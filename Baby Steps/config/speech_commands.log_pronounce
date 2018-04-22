@@ -6,6 +6,7 @@ CONTINUE - Main
 DELTA - Main 
 ECHO - Main 
 EIGHT - Main 
+FAILURE - Main 
 FIVE - Main 
 FOUR - Main 
 FOXTROT - Main 
@@ -13,7 +14,6 @@ GOLF - Main
 HOTEL - Main 
 KING - Main 
 KNIGHT - Main 
-NO - Main 
 ONE - Main 
 PAUSE - Main 
 PAWN - Main 
@@ -23,7 +23,7 @@ ROOK - Main
 SEVEN - Main 
 SHUTDOWN - Main 
 SIX - Main 
+SUCCESS - Main 
 THREE - Main 
 TWO - Main 
-YES - Main 
 
