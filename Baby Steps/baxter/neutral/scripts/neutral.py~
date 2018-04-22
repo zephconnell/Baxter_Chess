@@ -1,0 +1,147 @@
+#!/usr/bin/env python
+
+# Copyright (c) 2013-2015, Rethink Robotics
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice,
+#    this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+# 3. Neither the name of the Rethink Robotics nor the names of its
+#    contributors may be used to endorse or promote products derived from
+#    this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
+"""
+ROS IMPORTS
+"""
+#you always need to import rospy
+import rospy
+#needed to find the path to where the images are stored
+import rospkg
+import cv;
+import cv2;
+#cv_bridge is the interface between ROS and openCV.
+#here is the web address-- wiki.ros.org/cv_bridge. 
+# you will find tutorials on how to convert OpenCV images to ROS sensor_msgs/Image messages
+import cv_bridge
+
+from sensor_msgs.msg import Image
+
+
+"""
+RETHINK IMPORTS
+"""
+import baxter_interface
+
+from baxter_interface import CHECK_VERSION
+#open cv and cv2 are used to create the images published to Baxter's topic /robot/xdisplay
+import cv;
+import cv2;
+#cv_bridge is the interface between ROS and openCV.
+#here is the web address-- wiki.ros.org/cv_bridge. 
+# you will find tutorials on how to convert OpenCV images to ROS sensor_msgs/Image messages
+import cv_bridge
+
+# we have to import the message type used to publish to the topic /robot/xdisplay
+from sensor_msgs.msg import Image
+
+# this class resets Baxter arms to neutral, resets the facescreen, makes sure the grippers are
+# open and then disables the motors.  Code snippets borrowed from rethink examples 
+class Reset(object):
+
+    def __init__(self):
+        
+        self._left_arm = baxter_interface.limb.Limb("left")
+        self._right_arm = baxter_interface.limb.Limb("right")
+        self._rp = rospkg.RosPack()
+        self._images = (self._rp.get_path('neutral') + '/share/images')
+        self.pub = rospy.Publisher('/robot/xdisplay', Image, latch=True, queue_size=10)
+        print("Getting robot state... ")
+        self._rs = baxter_interface.RobotEnable(CHECK_VERSION)
+        self._init_state = self._rs.state().enabled
+        print("Enabling robot... ")
+        self._rs.enable()
+        self.right_gripper = baxter_interface.Gripper("right")
+        self.left_gripper = baxter_interface.Gripper("left")
+                
+       
+    def set_neutral(self):
+        print("Moving to neutral pose...")
+        self._left_arm.move_to_neutral()
+        self._right_arm.move_to_neutral()
+       
+
+    def reset_facescreen(self):
+      
+        print('Resetting facescreen')
+        img = cv2.imread(self._images + '/default.png')
+        msg = cv_bridge.CvBridge().cv2_to_imgmsg(img, encoding= "bgr8")
+        self.pub.publish(msg)
+
+    def grippers_reset(self):
+        if self.right_gripper.error():
+            print("right gripper error, will reset")
+            self.right_gripper.reset()
+
+        if self.left_gripper.error():
+            print("left gripper error, will reset")
+            self.left_gripper.reset()
+
+        if not self.left_gripper.calibrated():
+            print("\ncalibrating left gripper")
+            self.left_gripper.calibrate()
+
+        if not self.right_gripper.calibrated():
+            print("\ncalibrating right gripper")
+            self.right_gripper.calibrate()
+        print("Make sure grippers are open")
+        self.right_gripper.open()
+        # this just puts ros to sleep for 1 sec
+        rospy.sleep(1)
+        self.left_gripper.open()
+       
+
+    def disable_motors(self):
+        if not self._init_state:
+            print("Disabling robot...")
+            self._rs.disable()
+        else:
+            print("Disabling the robot...")
+            self._rs.disable()
+        return True
+
+                       
+def main():       
+                          
+    
+    print("Initializing node...")
+    rospy.init_node("reset", anonymous = True)
+    reset = Reset()
+    reset.set_neutral()
+    reset.reset_facescreen()
+    reset.grippers_reset()
+    reset.disable_motors()
+    
+   
+    print("\nBaxter's arms now in neutral position, led display back to rethink log and motors have been disabled.")
+
+if __name__ == '__main__':
+    main()       
+
+
