@@ -44,7 +44,7 @@ class Voice:
         self.message = 'nothing yet'
         
         # A flag to determine whether or not voice control is paused
-        self.paused = False
+        self.paused = True
 
 	# A flag to determine if the given command is the pickup index or placement index
         self.movementdefined = False
@@ -83,17 +83,23 @@ class Voice:
         # set the flag accordingly 
         if command == 'pause':
             self.paused = True
-            print("Voice command features disabled.")
+            what_to_say = "Voice command features disabled."
+            self.talk.say_something(what_to_say)
+            print(what_to_say)
             return
         elif command == 'continue':
             self.paused = False
-            print("Voice command features enabled.")
+            what_to_say = "Voice command features enabled."
+            self.talk.say_something(what_to_say)
+            print(what_to_say)
             return
         
         # If voice control is paused, simply return without
         # performing any action
         if self.paused:
-            print("Currently paused")
+            what_to_say = "Currently paused"
+            #self.talk.say_something(what_to_say)
+            print(what_to_say)
             return       
         
         if command == 'shutdown':
@@ -103,7 +109,9 @@ class Voice:
             #reset.grippers_reset()
             #reset.disable_motors()
             rospy.signal_shutdown('Quit')
-            print("\nBaxter's arms now in neutral position, led display back to rethink log and motors have been disabled.")
+            what_to_say = "\nBaxter's arms now in neutral position, led display back to rethink log and motors have been disabled."
+            self.talk.say_something(what_to_say)
+            print(what_to_say)
             return
 
         # wait for an answer to whether Baxter successfully made a move or not before accepting any new movements
@@ -115,7 +123,11 @@ class Voice:
                 self.checkedmove = True
                 self.movesuccess = False
             else:
-                print("Must answer before requesting another move.\nDid Baxter successfully make the move most recently requested?\nReply 'Success' or 'Failure'.")
+                self.paused = True
+                what_to_say = "Must answer before requesting another move.\nDid Baxter successfully make the move most recently requested?\nReply 'Success' or 'Failure'."
+                self.talk.say_something(what_to_say)
+                print(what_to_say)
+                self.paused = False
             return
 
         piece = 'none'
@@ -286,18 +298,25 @@ class Voice:
             self.piecetomove = 'none'
             self.destination = 'nowhere'
             self.movementdefined = False
-            print("Reset confirmed. Say the piece you would like to move, or say a functional operation.")
+            what_to_say = "Reset confirmed. Say the piece you would like to move, or say a functional operation."
+            self.talk.say_something(what_to_say)
+            print(what_to_say)
+            
         else:
             print("No valid command")
             return
 	
         if self.piecetomove == 'none' and piece != 'none':
             self.piecetomove = piece
-            print(self.piecetomove + " has been chosen as the piece to move. Give the location to which you would like to move it.")
+            what_to_say = self.piecetomove + " has been chosen as the piece to move. Give the location to which you would like to move it."
+            self.talk.say_something(what_to_say)
+            print(what_to_say)
         if self.destination == 'nowhere' and index != 'nowhere' and self.piecetomove != 'none':
             self.destination = index
             self.movementdefined = True
-            print(self.destination + " has been chosen as the destination.")
+            what_to_say = self.destination + " has been chosen as the destination."
+            self.talk.say_something(what_to_say)
+            print(what_to_say)
 
 		
 # read the setup parameters from setup.dat
@@ -348,7 +367,8 @@ if __name__=="__main__":
         locator = Locate(limb, distance)
         rospy.on_shutdown(locator.clean_shutdown)
         voice = Voice()
-        voice.talk.start_init()
+        what_to_say = "Press Enter to start initialization: "
+        voice.talk.say_something(what_to_say)
         raw_input("Press Enter to start initialization: ")
       
         locator.gripper.open()
@@ -367,13 +387,14 @@ if __name__=="__main__":
 
         # create a list of poses in Baxter's coordinates for each chess board square
         board_spot = list()
-        voice.talk.begin_voice()
-        raw_input("Press Enter to begin voice command operation: ")
-        for i in range (65):
-	    if i == 64:
+        what_to_say = "Set up board pieces. Then press Enter to begin voice command operation: "
+        voice.talk.say_something(what_to_say)
+        raw_input("Set up board pieces. Then press Enter to begin voice command operation: ")
+        for i in range (66):
+	    if i >= 64:
 		locator.pose = [copy.copy(locator.cBoard_tray_place[i][0]), #-.015
         	copy.copy(locator.cBoard_tray_place[i][1]), #-.045
-        	locator.piece_z,
+        	locator.piece_z - .15,
         	locator.roll,
                 locator.pitch,
                 locator.yaw]
@@ -387,8 +408,12 @@ if __name__=="__main__":
             board_spot.append(locator.pose)
         #locator.baxter_ik_move(locator.limb, locator.pose)
 
-        print("Say the piece you would like to move, or say a functional operation.")
-        voice.talk.say_piece()
+        #unpause to enable voice command operation
+        voice.paused = False
+
+        what_to_say = "Say the piece you would like to move, or say a functional operation."
+        voice.talk.say_something(what_to_say)
+        print(what_to_say)
         
         while not rospy.is_shutdown():
             # if the user defined a possible move attempt to perform it once
@@ -396,46 +421,54 @@ if __name__=="__main__":
                 #print the desired move to the terminal for reference
                 print("Attempting to move " + voice.piecetomove + " to postion " + voice.destination)
 
-                #get index of the piece the player wants to move
-                if(voice.whiteturn):
-                    pieceindex = game.white_piece_dict[voice.piecetomove]
-                else:
-                    pieceindex = game.black_piece_dict[voice.piecetomove]
-
                 #get the coordinates of the starting and ending positions for the desired move
-                pos1 = 8*(7-pieceindex[1]) + pieceindex[0]
                 loc = game.label_to_loc(voice.destination)
-                pos2 = 8*(7-loc[1]) + loc[0]
 
                 #check if the move is valid using the virtual board
                 validmove, piecekilled = game.check_move(voice.piecetomove,loc,voice.whiteturn)
 
                 #request baxter to perform the physical movement
                 if validmove:
+                    #get index of the piece the player wants to move
+                    if(voice.whiteturn):
+                        pieceindex = game.white_piece_dict[voice.piecetomove]
+                    else:
+                        pieceindex = game.black_piece_dict[voice.piecetomove]
+
+                    #get the coordinates of the starting and ending positions for the desired move
+                    pos1 = 8*(7-pieceindex[1]) + pieceindex[0]
+                    pos2 = 8*(7-loc[1]) + loc[0]
+
                     voice.paused = True
                     if piecekilled == True:
                         print("\nKilling")
                         locator.pick(board_spot[pos2])
-                        locator.middle(board_spot[28])
+                        locator.middle(board_spot[65])
                         locator.place(board_spot[64])
-                        locator.middle(board_spot[28])
+                        locator.middle(board_spot[65])
                         
                     print("\nPicking...")
                     locator.pick(board_spot[pos1])
-                    locator.middle(board_spot[28])
+                    locator.middle(board_spot[65])
                     print("\nPlacing...")
                     updatedpose = copy.copy(board_spot[pos2])
                     updatedpose[2] = board_spot[pos2][2] + .01
                     locator.place(updatedpose)
+		    locator.middle(board_spot[65])
                     voice.waitingforcheck = True
-                    print("Did Baxter successfully make the move requested? \nReply 'Success' or 'Failure'.")
+                    what_to_say = "Did Baxter successfully make the move requested? \nReply 'Success' or 'Failure'."
+                    voice.talk.say_something(what_to_say)
+                    print(what_to_say)
                     voice.paused = False
                 else:
-                    print("Requested move was invalid.\nSay the piece you would like to move or a functional operation.")
+                    what_to_say = "Requested move was invalid.\nSay the piece you would like to move, or say a functional operation."
+                    voice.talk.say_something(what_to_say)
+                    print(what_to_say)
                     voice.movementdefined = False
                     voice.piecetomove = 'none'
                     voice.destination = 'nowhere'
 
+            winner = False
             # if baxter successfully executed the move
             # update the virtual board state,
             # change turns,
@@ -443,6 +476,17 @@ if __name__=="__main__":
             if voice.movementdefined and voice.checkedmove:
                 if voice.movesuccess:
                     validmove = game.move_piece(voice.piecetomove,voice.destination,voice.whiteturn) # update virtual board state
+                    if not game.check_king_state(voice.whiteturn):
+                        if voice.whiteturn:
+                            what_to_say = "Red player wins."
+                            voice.talk.say_something(what_to_say)
+                            print(what_to_say)
+                        else:
+                            what_to_say = "Black player wins."
+                            voice.talk.say_something(what_to_say)
+                            print(what_to_say)
+                        rospy.signal_shutdown('Quit')
+                        break
                     voice.whiteturn = not voice.whiteturn # change turn between white and black
                 game.print_board()
                 voice.piecetomove = 'none'
@@ -450,7 +494,10 @@ if __name__=="__main__":
                 voice.movementdefined = False
                 voice.waitingforcheck = False
                 voice.checkedmove = False
-                print("Say the piece you would like to move or a functional operation.")
+                what_to_say = "Say the piece you would like to move, or say a functional operation."
+                voice.talk.say_something(what_to_say)
+                print(what_to_say)
+
             voice.r.sleep()
             
     except rospy.ROSInterruptException:

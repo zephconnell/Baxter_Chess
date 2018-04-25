@@ -949,6 +949,16 @@ class Game():
 		del self.black_piece_dict[label]
 	else:
 		del self.white_piece_dict[label]
+    def check_king_state(self,white_turn):
+	if(white_turn):
+	    for key in self.black_piece_dict.keys():
+                if('K'==key):
+		    return True
+	else:
+	    for key in self.white_piece_dict.keys():
+                if('K'==key):
+		    return True
+	return False    
 
     def check_move(self,label,loc,white_turn):
 	self.killed_piece = False
@@ -990,7 +1000,9 @@ class Game():
                 current_loc = self.white_piece_dict[label]
 	    else:
                 current_loc = self.black_piece_dict[label]
-		    
+	else:
+	    print("Invalid Move")
+            return False	    
         i,j = self.initial_board.xy_to_ij(current_loc[0],current_loc[1])
         newi,newj = self.initial_board.xy_to_ij(loc[0],loc[1])
         piece_type = self.initial_board.board[i][j].return_piece().identity()

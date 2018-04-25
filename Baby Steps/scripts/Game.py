@@ -949,6 +949,16 @@ class Game():
 		del self.black_piece_dict[label]
 	else:
 		del self.white_piece_dict[label]
+    def check_king_state(self,white_turn):
+	if(white_turn):
+	    for key in self.black_piece_dict.keys():
+                if('K'==key):
+		    return True
+	else:
+	    for key in self.white_piece_dict.keys():
+                if('K'==key):
+		    return True
+	return False    
 
     def check_move(self,label,loc,white_turn):
 	self.killed_piece = False

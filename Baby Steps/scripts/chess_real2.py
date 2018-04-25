@@ -220,9 +220,9 @@ class Locate():
 
         # camera parameters (NB. other parameters in open_camera)****the description for how this was calculated is on the website
         self.cam_calib    = 0.0025                   # meters per pixel at 1 meter .0025
-        self.cam_x_offset = 0.040                      # camera gripper offset
+        self.cam_x_offset = 0.043                      # camera gripper offset
         self.cam_y_offset = -0.084			#-.01 or -.015
-	self.cam_y_offset_close = -.031
+	self.cam_y_offset_close = -.030
         self.width        = 960 #640                       # Camera resolution
         self.height       = 600 #400
 
@@ -278,7 +278,8 @@ class Locate():
 				(0.0,0.0),(0.0,0.0),(0.0,0.0),(0.0,0.0),
                                 (0.0,0.0),(0.0,0.0),(0.0,0.0),(0.0,0.0),
                                 (0.0,0.0),(0.0,0.0),(0.0,0.0),(0.0,0.0),
-                                (0.0,0.0),(0.0,0.0),(0.0,0.0),(0.0,0.0), (0.0,0.0)]
+                                (0.0,0.0),(0.0,0.0),(0.0,0.0),(0.0,0.0), 
+			        (0.0,0.0), (0.0,0.0)]
 
         # Enable the actuators
         #baxter_interface.RobotEnable().enable()
@@ -682,7 +683,7 @@ class Locate():
             sys.exit("ERROR - baxter_ik_move - Failed to append pose")
 
         if ik_response.isValid[0]:
-            self.splash_screen("Valid", "move")
+            #self.splash_screen("Valid", "move")
             print("PASS: Valid joint configuration found")
             # convert response to joint position control dictionary
             limb_joints = dict(zip(ik_response.joints[0].name, ik_response.joints[0].position))
@@ -693,7 +694,7 @@ class Locate():
                 self.other_limb_interface.move_to_joint_positions(limb_joints)
         else:
             # display invalid move message on head display
-            self.splash_screen("Invalid", "move")
+            #self.splash_screen("Invalid", "move")
             # little point in continuing so exit with error message
             print "requested move =", rpy_pose
             print("Requested move was not valid")
@@ -866,7 +867,8 @@ class Locate():
                 tempcount = tempcount + 1
 		
         p[64] = (p[31][0]+100, p[31][1])
-        for i in range(65):
+	p[65] = (p[28][0]-20, p[28][1] + 20)
+        for i in range(66):
             # mark position of cBoard tray places ---different colors were used so you could correlate what the calculations
             #   above are doing. 
             #parameters are img, center, radius, circle color(bgr for lime green is (0,250,0)), -1 means that it will fill the shape)
@@ -1024,7 +1026,7 @@ class Locate():
         file_name = self.image_dir + "circles" + ".jpg"
         cv.SaveImage(file_name, cv.fromarray(self.cv_image))
         image = cv2.imread(file_name)
-        #cv2.imshow("Test Circle", image)
+        cv2.imshow("Test Circle", image)
         #cv2.waitKey(0)
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         blurred = cv2.GaussianBlur(gray, (5,5),0)
@@ -1079,13 +1081,13 @@ class Locate():
                 print("Here is the value of circle_centers in the for-loop: ", circle_centers)
                 print('\n' * 2)
 	        # draw the contour and center of the shape on the image
-	        #cv2.drawContours(image, [c], -1, (0, 255, 0), 2)
-	        #cv2.circle(image, (cX, cY), 7, (255, 255, 255), -1)
+	        cv2.drawContours(image, [c], -1, (0, 255, 0), 2)
+	        cv2.circle(image, (cX, cY), 7, (255, 255, 255), -1)
 	        #cv2.putText(image, center, (cX - 20, cY - 20),
 		#cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
  
 	        # show the image
-	        #cv2.imshow("Image", image)
+	        cv2.imshow("Image", image)
 	        #cv2.waitKey(0)
         print("Here is the value of the closest point outside the for-loop: ", closest_point)
         #calculate the offsets from where you want to go to where the actual contour is located. 
