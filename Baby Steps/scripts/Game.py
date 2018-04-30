@@ -145,7 +145,8 @@ class Game():
         key = self.initial_board.board[i][j].return_piece().return_labelp()
         value = self.initial_board.board[i][j].return_piece().return_locp()
         self.black_piece_dict[key] = value
-        
+	
+    #function which prints the contents of white and black dictionaries
     def print_piece_dict(self):
         for key,value in self.white_piece_dict.items():
             print(key,":",value)
@@ -153,7 +154,8 @@ class Game():
         for key,value in self.black_piece_dict.items():
             print(key,":",value)
         
-
+    #function which iterates through the dictionary keys and returns if there is 
+    #a match to label
     def check_piece_dict(self,label,white_turn):
         if(white_turn):
             for key in self.white_piece_dict.keys():
@@ -164,6 +166,7 @@ class Game():
                 if(label==key):
                     return True
         return False
+    #function which generates a list of valid moves for a piece which wants to move
     def generate_moves(self,locp,white_turn):
         i = 0
         j = 0
@@ -405,6 +408,7 @@ class Game():
             else:
                 return True
     '''END OF PAWN CARDINAL DIRECTION BOOLEAN FUNCTIONS '''
+    '''START OF KNIGHT SPECIFIC MOVEMENT CHECKS'''
     def n1_move(self,currentX,currentY,move_list):
         X = currentX-1
         Y = currentY+2
@@ -509,6 +513,8 @@ class Game():
             return move_list
         else:
             return move_list
+'''END OF KNIGHT SPECIFIC MOVEMENT CHECKS'''
+'''START OF KING SPECIFIC MOVEMENT CHECKS'''
     def f_move(self,currentX,currentY,move_list):
         X = currentX
         Y = currentY
@@ -614,7 +620,8 @@ class Game():
             return move_list
         else:
             return move_list
-        
+     '''END OF KING SPECIFIC MOVEMENT CHECKS'''
+     '''START OF CARDINAL DIRECTION CHECKS'''   
     def d4_check(self,currentX,currentY,piece_color):
         i = 0
         newi = 0
@@ -784,6 +791,8 @@ class Game():
                 return False,False
             else:
                 return True,True
+     '''END of CARDINAL DIRECTION CHECKS'''
+    #function which does a check for all knight movements
     def n_check(self,X,Y,piece_color):
         i = 0
         newi = 0
@@ -804,6 +813,7 @@ class Game():
                 return False
             else:
                 return True
+    #START OF QUEEN/BISHOP/ROOK MOVEMENT CHECKS
     def d4_moves(self,currentX,currentY,move_list):
         X = currentX
         Y = currentY
@@ -934,7 +944,8 @@ class Game():
                 break
             check,enemy_piece = self.r_check(X,Y,piece_color)
         return move_list
-            
+    '''END OF KING/BISHOP/ROOK MOVEMENT CHECKS'''
+    #function that was used for testing purposes      
     def place_piece(self,piece,loc,colorp):
         i = 0
         j = 0
@@ -944,11 +955,13 @@ class Game():
         self.initial_board.board[i][j].return_piece().set_locp(loc[0],loc[1])
         self.initial_board.board[i][j].return_piece().set_color_string(colorp)
         self.initial_board.board[i][j].return_piece().set_labelp("PT")
+    #function which is used to remove a key value pair from a either the white or black dictionary.
     def remove_from_dict(self,label,white_turn):
 	if(white_turn):
 		del self.black_piece_dict[label]
 	else:
 		del self.white_piece_dict[label]
+    #function which determines if the king piece has been killed or not
     def check_king_state(self,white_turn):
 	if(white_turn):
 	    for key in self.black_piece_dict.keys():
@@ -959,7 +972,7 @@ class Game():
                 if('K'==key):
 		    return True
 	return False    
-
+    #function which returns true if a move is valid false otherwise
     def check_move(self,label,loc,white_turn):
 	self.killed_piece = False
         if(self.check_piece_dict(label,white_turn)):
@@ -988,6 +1001,7 @@ class Game():
             return False,self.killed_piece
         else:
             return False,self.killed_piece
+    #function which takes care of moving a piece and updating the board state
     def move_piece(self,label,loc_label,white_turn):
         i = 0
         j = 0
